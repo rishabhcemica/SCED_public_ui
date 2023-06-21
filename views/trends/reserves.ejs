@@ -1,0 +1,308 @@
+         <script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+         <script type="text/javascript">
+
+      var selectedDate='';
+      var chartdata;
+      var selectedGenerator;
+      var final;
+       var month_names =["Jan","Feb","Mar",
+                      "Apr","May","Jun",
+                      "Jul","Aug","Sep",
+                      "Oct","Nov","Dec"];
+                      var final1;
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+   // $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+
+  htm='';
+
+for(var i=1;i<=96;i++){
+htm+='<option value="'+i.toString()+'">'+i.toString()+'</option>';}
+document.getElementById('dropdown').innerHTML=htm;
+
+
+});
+
+function showOpt(){
+    selectedDate=document.getElementById("calender1").value;
+var  selectedBlock=$("#dropdown").val();
+
+$.post('/gamspwc/getReserve',{date:selectedDate,block:selectedBlock},function(res){
+var reserve=JSON.parse(res);
+
+$.post('/account/getRates',{date:[selectedDate]},function(res){
+
+  var vCost=JSON.parse(res);
+var vcdate=selectedDate.split("-")[0]+"-"+month_names[parseInt(selectedDate.split("-")[1])-1]+"-"+selectedDate.split("-")[2];
+var reserveArray=[];
+var virtualReserve=[];
+var rampReserve=[];
+for(var i=0;i<reserve.length;i++){
+  var preUP=Math.min(reserve[i]['pmax']-reserve[i]['sch'],reserve[i]['rup']);
+  var preDN=Math.max(reserve[i]['pmin']-reserve[i]['sch'],-1*reserve[i]['rdn']);
+
+  var postUP=Math.min(reserve[i]['pmax']-reserve[i]['opt'],reserve[i]['rup']);
+  var postDN=Math.max(reserve[i]['pmin']-reserve[i]['opt'],-1*reserve[i]['rdn']);
+
+  var virpreUP=reserve[i]['pmax']-reserve[i]['sch'];
+  var virpreDN=reserve[i]['pmin']-reserve[i]['sch'];
+
+  var virpostUP=reserve[i]['pmax']-reserve[i]['opt'];
+  var virpostDN=reserve[i]['pmin']-reserve[i]['opt'];
+
+  var ramppreUP=reserve[i]['rup'];
+  var ramppreDN=-1*reserve[i]['rdn'];
+
+  var ramppostUP=reserve[i]['rup'];
+  var ramppostDN=-1*reserve[i]['rdn'];
+
+
+ reserveArray.push({vc:vCost[vcdate][reserve[i]['id']],preup:preUP,predn:preDN,postup:postUP,postdn:postDN});
+  virtualReserve.push({vc:vCost[vcdate][reserve[i]['id']],preup:virpreUP,predn:virpreDN,postup:virpostUP,postdn:virpostDN});
+   rampReserve.push({vc:vCost[vcdate][reserve[i]['id']],preup:ramppreUP,predn:ramppreDN,postup:ramppostUP,postdn:ramppostDN});
+
+}
+
+reserveArray.sort(function(a, b){return a.vc - b.vc});
+virtualReserve.sort(function(a, b){return a.vc - b.vc});
+rampReserve.sort(function(a, b){return a.vc - b.vc});
+
+console.log(reserveArray);
+var cummArray=[];
+var preupsum=0;
+var prednsum=0;
+var postupsum=0;
+var postdnsum=0;
+var final=[];
+var prUP=[];
+var prDN=[];
+var poUP=[];
+var poDN=[];
+
+var virprUP=[];
+var virprDN=[];
+var virpoUP=[];
+var virpoDN=[];
+
+var rampprUP=[];
+var rampprDN=[];
+var ramppoUP=[];
+var ramppoDN=[];
+var vc=[]
+//final.push(['VC','Pre SCED UP reserve','Pre SCED DN reserve','Post SCED UP reserve','Post SCED DN reserve']);
+for(var i=0;i<reserveArray.length;i++){
+//var temp=[];
+vc.push(reserveArray[i]['vc']);
+preupsum+=reserveArray[i]['preup'];
+prednsum+=reserveArray[i]['predn'];
+postupsum+=reserveArray[i]['postup'];
+postdnsum+=reserveArray[i]['postdn'];
+
+prUP.push(preupsum);
+prDN.push(prednsum);
+poUP.push(postupsum);
+poDN.push(postdnsum);
+//final.push(temp);
+
+}
+
+ preupsum=0;
+ prednsum=0;
+ postupsum=0;
+ postdnsum=0;
+for(var i=0;i<reserveArray.length;i++){
+//var temp=[];
+//vc.push(reserveArray[i]['vc']);
+preupsum+=virtualReserve[i]['preup'];
+prednsum+=virtualReserve[i]['predn'];
+postupsum+=virtualReserve[i]['postup'];
+postdnsum+=virtualReserve[i]['postdn'];
+
+virprUP.push(preupsum);
+virprDN.push(prednsum);
+virpoUP.push(postupsum);
+virpoDN.push(postdnsum);
+//final.push(temp);
+
+}
+
+
+ preupsum=0;
+ prednsum=0;
+ postupsum=0;
+ postdnsum=0;
+for(var i=0;i<reserveArray.length;i++){
+//var temp=[];
+//vc.push(reserveArray[i]['vc']);
+preupsum+=rampReserve[i]['preup'];
+prednsum+=rampReserve[i]['predn'];
+postupsum+=rampReserve[i]['postup'];
+postdnsum+=rampReserve[i]['postdn'];
+
+rampprUP.push(preupsum);
+rampprDN.push(prednsum);
+ramppoUP.push(postupsum);
+ramppoDN.push(postdnsum);
+//final.push(temp);
+
+}
+//final1=final;
+
+
+Highcharts.chart('chart_div', {
+    chart: {
+        type: 'area',
+        zoomType: 'xy',
+    },
+    title: {
+        text: 'Ramping Reserves Pre and Post SCED for Date  '+selectedDate+' and For Block '+selectedBlock
+    },
+    xAxis: {
+        categories: vc
+    },
+    credits: {
+        enabled: false
+    },
+    series: [{
+        name: 'Pre SCED UP Reserve',
+        data: prUP
+    }, {
+        name: 'Pre SCED DN Reserve',
+        data: prDN
+    }, {
+        name: 'Post SCED UP Reserve',
+        data: poUP
+    }, {
+        name: 'Post SCED DN Reserve',
+        data: poDN
+    }]
+});
+
+Highcharts.chart('chart_div1', {
+    chart: {
+        type: 'area',
+        zoomType: 'xy',
+    },
+    title: {
+        text: ' Reserves Pre and Post SCED for Date  '+selectedDate+' and For Block '+selectedBlock
+    },
+    xAxis: {
+        categories: vc
+    },
+    credits: {
+        enabled: false
+    },
+    series: [{
+        name: 'Pre SCED UP Reserve',
+        data: virprUP
+    }, {
+        name: 'Pre SCED DN Reserve',
+        data: virprDN
+    }, {
+        name: 'Post SCED UP Reserve',
+        data: virpoUP
+    }, {
+        name: 'Post SCED DN Reserve',
+        data: virpoDN
+    }]
+});
+
+Highcharts.chart('chart_div2', {
+    chart: {
+        type: 'area',
+        zoomType: 'xy',
+    },
+    title: {
+        text: ' total Declared Ramp Pre and Post SCED for Date  '+selectedDate+' and For Block '+selectedBlock
+    },
+    xAxis: {
+        categories: vc
+    },
+    credits: {
+        enabled: false
+    },
+    series: [{
+        name: 'Pre SCED UP Reserve',
+        data: rampprUP
+    }, {
+        name: 'Pre SCED DN Reserve',
+        data: rampprDN
+    }, {
+        name: 'Post SCED UP Reserve',
+        data: ramppoUP
+    }, {
+        name: 'Post SCED DN Reserve',
+        data: ramppoDN
+    }]
+});
+
+ // google.charts.load('current', {'packages':['corechart']});
+ //      google.charts.setOnLoadCallback(drawChart);
+
+});
+
+
+});
+
+
+}
+
+// function drawChart(){
+
+//   var data = google.visualization.arrayToDataTable(final1);
+// tle='Ramping Reserves Pre and Post SCED';
+//         var options = {
+//           title: tle,
+//                     titleTextStyle:{ color:'black',
+//   fontName:'Arial',
+//   fontSize:25,
+//   bold: true,
+//   italic: true }
+//         };
+
+//         var chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
+//         chart.draw(data, options);
+
+
+// }
+
+
+</script>   
+
+
+
+     <div class="row">
+               <div class="col-lg-2">
+    <label for="calender1">DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+        <div class="col-lg-2">
+          <label>Block</label>
+          <select id="dropdown" class="form-control">
+</select>
+      </div>
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-outline-primary form-control" onclick="showOpt()" >submit</button>
+</div>
+</div>
+<div class="col-lg-12" id="chart_div" style="width: 100%; height: 500px;"></div>
+<div class="col-lg-12" id="chart_div1" style="width: 100%; height: 500px;"></div>
+<div class="col-lg-12" id="chart_div2" style="width: 100%; height: 500px;"></div>

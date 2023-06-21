@@ -1,0 +1,385 @@
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+      <script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script type="text/javascript">
+
+      var selectedDate='';
+      var selectedGenerator;
+      var selectedGenerator1;
+      var chartdata;
+      var final;
+       var chartdata1;
+      var final1;
+     
+      var month_names =["Jan","Feb","Mar",
+                      "Apr","May","Jun",
+                      "Jul","Aug","Sep",
+                      "Oct","Nov","Dec"];
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+        $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+   // $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+document.getElementById("calender2").value = today;
+$.post('/gen/getAllGens',function(res){
+var gens=JSON.parse(res);
+
+
+
+
+  htm='';
+htm+='<option value="ALL">ALL</option>';
+htm+='<option value="AR">NER</option>';
+htm+='<option value="SR">SR</option>';
+htm+='<option value="WR">WR</option>';
+htm+='<option value="ER">ER</option>';
+htm+='<option value="NR">NR</option>';
+for(var i=0;i<gens.length;i++){
+htm+='<option value="'+gens[i]['id']+'">'+gens[i]['name']+'</option>';}
+document.getElementById('dropdown').innerHTML=htm;
+});
+
+});
+
+function showOpt(){
+
+    Number.prototype.round = function (places) {
+                return +(Math.round(this + "e+" + places) + "e-" + places);
+            }
+
+
+  selectedDate=document.getElementById("calender1").value;
+var selectedGen=$("#dropdown").val();
+
+ var todate=document.getElementById("calender2").value;
+
+
+
+  var from=$( "#calender1" ).datepicker('getDate');
+  var dates=[];
+  var i=1;
+  dates.push(selectedDate);
+  if(selectedDate!=todate)
+{  
+
+  do{   
+
+  var x=from;
+   x.setDate(x.getDate()+i);
+   var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=todate);
+
+}
+
+
+$.post('/gamsdata/getTodaySaving',{selectedDate:dates,selectedGen:selectedGen,flag:0},function(res){
+   
+chartdata=JSON.parse(res);
+selectedGenerator=idtoname[selectedGen];
+
+if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+
+console.log(chartdata);
+var finaldata=[];
+var tt=[];
+var cumm=0;
+tt.push("generator");
+tt.push("Savings");
+finaldata.push(tt);
+var hh=[];
+hh.push("1");
+hh.push(chartdata[1][1]);
+cumm+=chartdata[1][1];
+finaldata.push(hh);
+var xaxis=[];
+var savingsData=[];
+//xaxis.push("1");
+
+if(dates.length==1){
+  for(let j=1;j<96;j++){
+    xaxis.push(j)
+  }
+}else{
+for(let i=0;i<dates.length;i++){
+  for(let j=1;j<96;j++){
+    xaxis.push(dates[i]+":"+j)
+  }
+}
+}
+
+savingsData.push(chartdata[1][1]);
+for(var i=2;i<chartdata.length;i++){
+var temp=[];
+temp.push(i.toString());
+temp.push(chartdata[i][1]);
+//xaxis.push(chartdata[i][0]);
+savingsData.push((chartdata[i][1]).round(2));
+cumm+=chartdata[i][1];
+finaldata.push(temp);
+}
+cumm=Math.round((cumm/4)*100)/100;
+console.log(finaldata);
+final=finaldata;
+
+
+
+
+
+
+Highcharts.chart('chart_div', {
+
+    chart: {
+        type: 'area',
+        zoomType: 'xy',
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        },
+    title: {
+        text:'Reduction in Generation cost for ' +selectedGenerator+' from  Date '+selectedDate+' to Date '+todate 
+    },
+    xAxis: {
+        categories: xaxis,
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    
+    credits: {
+        enabled: false
+    },
+    series: [{
+        name: 'Reduction in cost',
+        data: savingsData,
+        color:' #0000AE'
+    }]
+});
+
+// google.charts.load('current', {'packages':['corechart']});
+     // google.charts.setOnLoadCallback(drawChart);
+        document.getElementById('chart_cumm').innerHTML="<h3>Cumulative Net  :"+cumm.toString()+" (in Lakhs) </h3>";
+        //document.getElementById('chart_avg').innerHTML="<h3>Average  :"+(cumm/((chartdata.length-1)/96)).toString()+" (in Lakhs) </h3>";
+
+
+    $.post('/gamsdata/getTodayDataDate',{selectedDate:dates,selectedGen:selectedGen},function(res){
+   selectedGenerator=idtoname[selectedGen];
+   if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+var chartdata1=JSON.parse(res);
+
+
+console.log(chartdata1);
+
+
+
+var dates=[];
+dates.push(selectedDate);
+$.post('/gen/getAllGens',function(res){
+var gens=JSON.parse(res);
+console.log(gens);
+
+
+$.post('/account/getRates',{date:dates},function(res){
+ var genrates=JSON.parse(res);
+  var maxRate=0;
+ var vcdate=selectedDate.split("-")[0]+"-"+month_names[parseInt(selectedDate.split("-")[1])-1]+"-"+selectedDate.split("-")[2];
+ //console.log(parseFloat(genrates[vcdate][parseInt(gens[0]['id'])]));
+ var cumm1=0;
+ for(var i=1;i<chartdata1.length;i++){
+let cumtemp = chartdata1[i][2]-chartdata1[i][1];
+
+if(cumtemp <2 && cumtemp > -2)
+{
+  cumtemp =0;
+}
+cumm1+=cumtemp;
+
+
+
+console.log(cumm1)
+
+}
+for(var g=0;g<gens.length;g++){
+  //console.log(parseInt(genrates[vcdate][parseInt(gens[g]['id'])]));
+if(parseInt(genrates[vcdate][parseInt(gens[g]['id'])])>maxRate){
+//console.log(maxRate);
+maxRate=parseFloat(genrates[vcdate][gens[g]['id']]);
+
+}
+
+}
+console.log(maxRate);
+cumm1=Math.round(cumm1*100)/100;
+cumm1=Math.round((cumm1*maxRate/40000)*100)/100;
+if(selectedGen=="ALL")
+{document.getElementById('chart_cumm2').innerHTML="<h5>Net Relaxation Cost = (Net Relaxation(MW) * SMP_MAX (Paise/KWHr))/40000 &nbsp;&nbsp;&nbsp;&nbsp;   &nbsp;&nbsp;&nbsp;&nbsp;    Note:Already included in Cumulative Net </h5>";
+       document.getElementById('chart_cumm1').innerHTML="<h3>Net Relaxation Cost :"+cumm1.toString()+" (in Lakhs)  </h3>";
+     }else{
+      document.getElementById('chart_cumm2').innerHTML="";
+      document.getElementById('chart_cumm1').innerHTML="";
+     }
+});
+});
+
+      });
+
+     // showOpt1();
+      });
+
+
+
+}
+
+
+function showOpt1(){
+  selectedDate=document.getElementById("calender1").value;
+var selectedGen=$("#dropdown").val();
+$.post('/gamsdata/getTodaySaving',{selectedDate:selectedDate,selectedGen:selectedGen,flag:1},function(res){
+   
+chartdata1=JSON.parse(res);
+selectedGenerator1=idtoname[selectedGen];
+if(typeof(selectedGenerator1)=="undefined"){
+  selectedGenerator1=selectedGen;
+}
+console.log(chartdata);
+var finaldata=[];
+var tt=[];
+tt.push("generator");
+tt.push("out flow from the pool");
+tt.push("inflow into the pool");
+finaldata.push(tt);
+var hh=[];
+hh.push("1");
+hh.push(chartdata1[1][1]);
+hh.push(chartdata1[1][2]);
+finaldata.push(hh);
+for(var i=2;i<chartdata.length;i++){
+var temp=[];
+temp.push(i.toString());
+temp.push(chartdata1[i][1]);
+temp.push(chartdata1[i][2]);
+finaldata.push(temp);
+}
+
+console.log(finaldata);
+final1=finaldata;
+ google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart1);
+      });
+
+}
+
+function drawChart(){
+
+  var data = google.visualization.arrayToDataTable(final);
+  var tle='Net for '+selectedGenerator+' For Date '+selectedDate;
+
+        var options = {
+          title:tle,
+                    titleTextStyle:{ color:'black',
+  fontName:'Arial',
+  fontSize:25,
+  bold: true,
+  italic: true },
+          hAxis: {title: 'Block'},
+           vAxis: {format:'# Lakhs/Hr'}
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+
+
+}
+
+
+function drawChart1(){
+
+  var data = google.visualization.arrayToDataTable(final1);
+  var tle='Savings for '+selectedGenerator;
+
+        var options = {
+          title:tle,
+                    titleTextStyle:{ color:'black',
+  fontName:'Arial',
+  fontSize:25,
+  bold: true,
+  italic: true },
+          hAxis: {title: 'Block'}
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_div1'));
+        chart.draw(data, options);
+
+
+}
+
+    </script>
+
+
+      <div class="row">
+
+               <div class="col-lg-2">
+    <label for="calender1">FROM DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+
+               <div class="col-lg-2">
+    <label for="calender2">TO DATE</label>
+     <input type="text" class="form-control"   id="calender2">
+</div>
+
+        <div class="col-lg-4">
+          <label>Generators</label>
+          <select id="dropdown" class="form-control">
+</select>
+      </div>
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-primary form-control" onclick="showOpt()" >submit</button>
+</div>
+</div>
+<div id="chart_div" style="width: 100%; height: 500px;" class="row"></div>
+
+<div id="chart_cumm"  class="row offset-lg-4"></div>
+
+<div id="chart_cumm1"  class="row offset-lg-4"></div>
+
+<div id="chart_cumm2" class="row offset-lg-2"></div>
+
+<div id="chart_avg" class="row offset-lg-4"></div>
+

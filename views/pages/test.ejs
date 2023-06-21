@@ -1,0 +1,209 @@
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+      <script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<style type="text/css">
+  .tableFixHead table td:first-child {
+  position: sticky;
+  left: 0;
+  background-color: #ddd;
+}
+
+</style>
+    <script type="text/javascript">
+
+      var selectedDate='';
+      var selectedGenerator;
+      var selectedGenerator1;
+      var chartdata;
+      var final;
+       var chartdata1;
+      var final1;
+     
+      var month_names =["Jan","Feb","Mar",
+                      "Apr","May","Jun",
+                      "Jul","Aug","Sep",
+                      "Oct","Nov","Dec"];
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+       
+   // $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+
+
+htm='';
+
+htm+='<option value="NER">NER</option>';
+htm+='<option value="SR">SR</option>';
+htm+='<option value="WR">WR</option>';
+htm+='<option value="ER">ER</option>';
+htm+='<option value="NR">NR</option>';
+
+document.getElementById('dropdown').innerHTML=htm;
+
+
+});
+
+function showOpt(){
+  let fromdate=document.getElementById("calender1").value;
+let region = $("#dropdown").val();
+
+
+
+
+
+$.post('/wbes/getGenSchedule',{fromdate,region},function(res){
+   
+chartdata=JSON.parse(res)["data"]
+rev = JSON.parse(res)["rev"]
+//console.log(res)
+
+
+let lb = "<center><h3>NET TOTAL SCHEDULE OF GENERATORS OF "+region+" FOR DATE "+fromdate+" BLOCKWISE (REVISION NO:) "+rev+" </center></h3>"
+
+
+
+
+let arr=[]
+
+let header = ['BLOCK']
+for(let key in chartdata){
+header.push(key)
+}
+
+console.log(chartdata)
+for(let i=0;i<96;i++){
+
+let temp = []
+let temp2= []
+temp.push(i+1)
+  for(let key in chartdata){
+    let undispatchedPower
+    let dconbar
+    try{
+        temp.push(chartdata[key]["declaredList"]["SellerDCTotal"].split(",")[i])
+        temp.push(chartdata[key]["declaredList"]["DCOnBarForSchd"].split(",")[i])
+        dconbar = chartdata[key]["declaredList"]["DCOnBarForSchd"].split(",")[i]
+    }catch(error){
+      temp.push("-")
+      temp.push("-")
+      dconbar = "-"
+    }
+    try{
+      if(dconbar!="-"){
+        undispatchedPower = parseFloat(chartdata[key]["declaredList"]["DCOnBarForSchd"].split(",")[i])+parseFloat(chartdata[key]["netScheduleSummary"]["NET_Total"].split(",")[i])
+        undispatchedPower = Math.round(undispatchedPower*10000)/10000
+      }else{
+        undispatchedPower = "-"
+      }
+        
+        // console.log("Summary",key,chartdata[key]["declaredList"])
+        // 
+
+        temp.push(-1*parseFloat(chartdata[key]["netScheduleSummary"]["NET_Total"].split(",")[i]))
+        temp.push(undispatchedPower)
+    }catch(error){
+        temp.push("-")
+        temp.push("-")
+    }
+  }
+  console.log("Temp : ",temp2)
+
+arr.push(temp)
+
+}
+
+
+let htm='<table class="table "><thead><tr>'
+htm+='<th rowspan="2">BLOCK</th>'
+for(let i=1;i<header.length;i++){
+  htm+='<th style="text-align:center" colspan="4">'+header[i]+'</th>'
+}
+htm+='</tr><tr>'
+for(let i=1;i<header.length;i++){
+  htm+='<th>DC</th><th>DC On Bar</th><th>Net Schedule</th><th>Undispatched Power</th>'
+}
+
+htm+='</tr></thead><tbody>'
+
+
+for(let i=0;i<arr.length;i++){
+  htm+='<tr>'
+  for(let j=0;j<arr[i].length;j++){
+    htm+='<td>'+arr[i][j]+'</td>'
+  }
+  htm+='</tr>'
+}
+
+htm+='</tbody></table>'
+document.getElementById('chart_div').innerHTML = htm
+
+document.getElementById("chart_label").innerHTML= lb
+
+
+      });
+
+
+
+}
+
+
+
+
+
+
+
+
+
+    </script>
+
+
+      <div class="row">
+
+               <div class="col-lg-2">
+    <label for="calender1">SELECT DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+
+ <!--               <div class="col-lg-2">
+    <label for="calender2">TO DATE</label>
+     <input type="text" class="form-control"   id="calender2">
+</div> -->
+
+        <div class="col-lg-4">
+          <label>REGIONS</label>
+          <select id="dropdown" class="form-control">
+</select>
+      </div>
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-primary form-control" onclick="showOpt()" >submit</button>
+</div>
+</div>
+<div id="chart_label"> </div>
+<div  id="chart_div" style="width: 100%; height: 500px;" class=" tableFixHead row"></div>
+<style type="text/css">
+  .tableFixHead          { overflow: auto; height: 100px; }
+.tableFixHead thead th { position: sticky; top: 0;z-index: 1; }
+
+/* Just common table stuff. Really. */
+table  { border-collapse: collapse; width: 100%; }
+th, td { padding: 8px 16px; }
+th     { background:#eee; }
+</style>
+
+

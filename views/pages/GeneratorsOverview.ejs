@@ -1,0 +1,1261 @@
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+
+<script type="text/javascript">
+  
+
+      var selectedDate='';
+      var tdate='';
+      var chartdata;
+      var selectedGenerator;
+      var selectedPattern;
+      var remaining=0;
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+    $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+   // $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+document.getElementById("calender2").value = today;
+$.post('/gen/getAllGens',function(res){
+var gens=JSON.parse(res);
+
+  htm='';
+
+for(var i=0;i<gens.length;i++){
+htm+='<option value="'+gens[i]['id']+'">'+gens[i]['name']+'</option>';}
+
+
+document.getElementById('dropdowngen').innerHTML=htm;
+
+
+
+});
+
+
+});
+
+
+
+
+
+
+
+
+function showPattern(){
+  selectedDate=document.getElementById("calender1").value;
+  tdate=document.getElementById("calender2").value;
+ var selectedGen=$("#dropdowngen").val();
+ var selectedPat=$('#dropdownpattern').val();
+
+
+  var from=$( "#calender1" ).datepicker('getDate');
+  var dates=[];
+  var i=1;
+  dates.push(selectedDate);
+  if(selectedDate!=tdate)
+{  
+
+  do{   
+
+  var x=from;
+   x.setDate(x.getDate()+i);
+   var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=tdate);
+
+}
+
+
+
+document.getElementById('chart_div').innerHTML='';
+document.getElementById('chart_cumm').innerHTML='';
+document.getElementById('chart_div1').innerHTML='';
+document.getElementById('chart_div2').innerHTML='';
+document.getElementById('chart_div3').innerHTML='';
+
+
+
+$.post('/gamsactual/getTodayDataDateActual',{selectedDate:dates,selectedGen:selectedGen},function(res){
+   
+var chartdata=JSON.parse(res);
+selectedGenerator=idtoname[selectedGen];
+if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+console.log(chartdata);
+
+
+var actramp=[];
+var optramp=[];
+var act =  [];
+var opt=[];
+
+var actrampunsorted=[];
+var optrampunsorted=[];
+var schrampunsorted=[];
+
+var xaxisdata=[];
+for(var i=1;i<chartdata.length-1;i++)
+{
+  optramp.push(chartdata[i+1][1] - chartdata[i][1]);
+  actramp.push(chartdata[i+1][2] - chartdata[i][2]);
+
+  optrampunsorted.push(chartdata[i+1][1] - chartdata[i][1]);
+  actrampunsorted.push(chartdata[i+1][2] - chartdata[i][2]);
+
+  xaxisdata.push(dates[Math.floor((i-1)/96)] + ':' + chartdata[i][0] );
+
+  act.push(chartdata[i][2]);
+  opt.push(chartdata[i][1]);
+}
+
+actramp.push(actramp[actramp.length-1]);
+optramp.push(optramp[optramp.length-1]);
+actrampunsorted.push(actrampunsorted[actrampunsorted.length-1]);
+optrampunsorted.push(optrampunsorted[optrampunsorted.length-1]);
+act.push(chartdata[chartdata.length-1][2]);
+opt.push(chartdata[chartdata.length-1][1]);
+xaxisdata.push(dates[-1] + ':96')
+console.log(xaxisdata);
+
+
+
+
+
+$.post('/gamsdata/getTodayDataDate',{selectedDate:dates,selectedGen:selectedGen},function(res){
+   
+var chartdata=JSON.parse(res);
+selectedGenerator=idtoname[selectedGen];
+if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+console.log(chartdata);
+
+var sch = [];
+var pmax=[];
+var pmin=[];
+var schramp = [];
+var xaxisdata=[];
+
+for(let i=1;i<chartdata.length-1;i++)
+{
+    sch.push(chartdata[i][1]);
+    pmax.push(chartdata[i][3]);
+    pmin.push(chartdata[i][4]);
+    schramp.push(chartdata[i+1][1] - chartdata[i][1]);
+    schrampunsorted.push(chartdata[i+1][1] - chartdata[i][1]);
+    xaxisdata.push(dates[Math.floor((i-1)/96)] + ':' + chartdata[i][0] );
+}
+
+schramp.push(schramp[schramp.length-1]);
+schrampunsorted.push(schrampunsorted[schrampunsorted.length-1]);
+sch.push(chartdata[chartdata.length-1][1]);
+pmax.push(chartdata[chartdata.length-1][3]);
+pmin.push(chartdata[chartdata.length-1][4]);
+xaxisdata.push(dates[dates.length-1] + ':96')
+
+
+
+let scatter_sch=[];
+let scatter_opt=[];
+let scatter_pmax=[];
+let scatter_pmin=[];
+console.log(xaxisdata);
+
+for(let i =0;i<xaxisdata.length;i++)
+{
+  scatter_sch.push(sch[i]);
+  scatter_opt.push(opt[i]);
+  scatter_pmax.push(pmax[i]);
+  scatter_pmin.push(pmin[i]);
+}
+
+
+console.log(scatter_sch);
+
+
+
+let scatter_act_opt = [];
+for(let i =0;i<act.length;i++)
+{
+  var temp = [];
+  temp.push(act[i]);
+  temp.push(opt[i]);
+
+  scatter_act_opt.push(temp);
+
+}
+
+console.log(scatter_act_opt);
+
+
+
+
+sch.sort(function(a,b){return a-b});
+opt.sort(function(a,b){return a-b});
+act.sort(function(a,b){return a-b});
+pmin.sort(function(a,b){return a-b});
+pmax.sort(function(a,b){return a-b});
+actramp.sort(function(a,b){return a-b});
+schramp.sort(function(a,b){return a-b});
+optramp.sort(function(a,b){return a-b});
+
+
+var countValuessch=[];
+var countValuesopt=[];
+var countValuesact=[];
+var countValuespmax=[];
+var countValuespmin=[];
+var countValuesschramp=[];
+var countValuesactramp=[];
+var countValuesoptramp=[];
+
+console.log('actramp sorted',actramp);
+
+for(var i=0;i<sch.length;i++)
+{
+
+  if(sch.indexOf(sch[i]) == i)
+  {
+    countValuessch.push({ct:Number((((sch.length-sch.indexOf(sch[i]))/sch.length)*100).toFixed(2)),at:(sch[i])});
+  }
+  
+}
+
+for(var i=0;i<schramp.length;i++)
+{
+
+  if(schramp.indexOf(schramp[i]) == i)
+  {
+    countValuesschramp.push({ct:Number((((schramp.length-schramp.indexOf(schramp[i]))/schramp.length)*100).toFixed(2)),at:(schramp[i])});
+  }
+  
+}
+
+for(var i=0;i<opt.length;i++)
+{
+
+  if(opt.indexOf(opt[i]) == i)
+  {
+    countValuesopt.push({ct:Number((((opt.length-opt.indexOf(opt[i]))/opt.length)*100).toFixed(2)),at:(opt[i])});
+  }
+  
+}
+
+for(var i=0;i<optramp.length;i++)
+{
+
+  if(optramp.indexOf(optramp[i]) == i)
+  {
+    countValuesoptramp.push({ct:Number((((optramp.length-optramp.indexOf(optramp[i]))/optramp.length)*100).toFixed(2)),at:(optramp[i])});
+  }
+  
+}
+
+
+
+
+
+
+
+for(var i=0;i<act.length;i++)
+{
+
+  if(act.indexOf(act[i]) == i)
+  {
+    countValuesact.push({ct:Number((((act.length-act.indexOf(act[i]))/act.length)*100).toFixed(2)),at:(act[i])});
+  }
+  
+}
+
+for(var i=0;i<actramp.length;i++)
+{
+
+  if(actramp.indexOf(actramp[i]) == i)
+  {
+    countValuesactramp.push({ct:Number((((actramp.length-actramp.indexOf(actramp[i]))/actramp.length)*100).toFixed(2)),at:(actramp[i])});
+  }
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+for(var i=0;i<pmax.length;i++)
+{
+
+  if(pmax.indexOf(pmax[i]) == i)
+  {
+    countValuespmax.push({ct:Number((((pmax.length-pmax.indexOf(pmax[i]))/pmax.length)*100).toFixed(2)),at:(pmax[i])});
+  }
+  
+}
+
+for(var i=0;i<pmin.length;i++)
+{
+
+  if(pmin.indexOf(pmin[i]) == i)
+  {
+    countValuespmin.push({ct:Number((((pmin.length-pmin.indexOf(pmin[i]))/pmin.length)*100).toFixed(2)),at:(pmin[i])});
+  }
+  
+}
+
+
+
+
+
+countValuessch.sort(function(a, b){return a.ct - b.ct});
+countValuesopt.sort(function(a, b){return a.ct - b.ct});
+countValuesact.sort(function(a, b){return a.ct - b.ct});
+countValuespmax.sort(function(a, b){return a.ct - b.ct});
+countValuespmin.sort(function(a, b){return a.ct - b.ct});
+countValuesschramp.sort(function(a, b){return a.ct - b.ct});
+countValuesactramp.sort(function(a, b){return a.ct - b.ct});
+countValuesoptramp.sort(function(a, b){return a.ct - b.ct});
+
+
+
+
+var finaldatasch=[];
+var finaldataopt=[];
+var finaldataact=[];
+var finaldatapmax=[];
+var finaldatapmin=[];
+var finaldataschramp=[];
+var finaldataactramp=[];
+var finaldataoptramp=[];
+
+
+
+
+
+for(var k=0;k<countValuessch.length;k++){
+  var temp=[];
+  temp.push(countValuessch[k]['ct']);
+  temp.push(countValuessch[k]['at']);
+  finaldatasch.push(temp);
+}
+
+for(var k=0;k<countValuesschramp.length;k++){
+  var temp=[];
+  temp.push(countValuesschramp[k]['ct']);
+  temp.push(countValuesschramp[k]['at']);
+  finaldataschramp.push(temp);
+}
+
+
+for(var k=0;k<countValuesopt.length;k++){
+  var temp=[];
+  temp.push(countValuesopt[k]['ct']);
+  temp.push(countValuesopt[k]['at']);
+  finaldataopt.push(temp);
+}
+
+//console.log('finaldataopt ',finaldataopt);
+
+
+for(var k=0;k<countValuesoptramp.length;k++){
+  var temp=[];
+  temp.push(countValuesoptramp[k]['ct']);
+  temp.push(countValuesoptramp[k]['at']);
+  finaldataoptramp.push(temp);
+}
+
+for(var k=0;k<countValuesact.length;k++){
+  var temp=[];
+  temp.push(countValuesact[k]['ct']);
+  temp.push(countValuesact[k]['at']);
+  finaldataact.push(temp);
+}
+
+for(var k=0;k<countValuesactramp.length;k++){
+  var temp=[];
+  temp.push(countValuesactramp[k]['ct']);
+  temp.push(countValuesactramp[k]['at']);
+  finaldataactramp.push(temp);
+}
+
+
+for(var k=0;k<countValuespmax.length;k++){
+  var temp=[];
+  temp.push(countValuespmax[k]['ct']);
+  temp.push(countValuespmax[k]['at']);
+  finaldatapmax.push(temp);
+}
+
+for(var k=0;k<countValuespmin.length;k++){
+  var temp=[];
+  temp.push(countValuespmin[k]['ct']);
+  temp.push(countValuespmin[k]['at']);
+  finaldatapmin.push(temp);
+}
+
+
+finaldataopt.unshift([0,finaldataopt[0][1]]);
+finaldataact.unshift([0,finaldataact[0][1]]);
+finaldatasch.unshift([0,finaldatasch[0][1]]);
+finaldatapmax.unshift([0,finaldatapmax[0][1]]);
+finaldatapmin.unshift([0,finaldatapmin[0][1]]);
+finaldataschramp.unshift([0,finaldataschramp[0][1]]);
+finaldataoptramp.unshift([0,finaldataoptramp[0][1]]);
+finaldataactramp.unshift([0,finaldataactramp[0][1]]);
+
+
+
+        var finaldataschdiurnal=[];
+        var finaldataactdiurnal=[];
+        var finaldataoptdiurnal=[];
+        var xaxisdata2=[];
+        for(var i=0;i<96;i++)
+        {
+          xaxisdata2.push(i+1);
+          finaldataoptdiurnal.push(0);
+          finaldataactdiurnal.push(0);
+          finaldataschdiurnal.push(0);
+        }
+
+        for(var i=0;i<schrampunsorted.length;i++)
+        {
+          finaldataschdiurnal[i%96] += schrampunsorted[i];
+        }
+
+
+        for(var i=0;i<optrampunsorted.length;i++)
+        {
+          finaldataoptdiurnal[i%96] += optrampunsorted[i];
+        }
+
+
+        for(var i=0;i<actrampunsorted.length;i++)
+        {
+          finaldataactdiurnal[i%96] += actrampunsorted[i];
+        }
+
+        for(var i=0;i<96;i++)
+        {
+          finaldataschdiurnal[i]=Number((finaldataschdiurnal[i]/(dates.length)).toFixed(2));
+          finaldataactdiurnal[i]=Number((finaldataactdiurnal[i]/(dates.length)).toFixed(2));
+          finaldataoptdiurnal[i]=Number((finaldataoptdiurnal[i]/(dates.length)).toFixed(2));
+        }
+
+
+//Duration graph of sch opt pmin pmax
+
+Highcharts.chart('chart_div', {
+
+    chart: {
+        type: 'line',
+        zoomType: 'xy'
+    }, legend: {
+              margin:25,
+              width:1000,
+              itemDistance: 150,
+              itemStyle: {
+                 fontSize: '25px', 
+                 color: '#000000'
+              }
+
+        },
+        plotOptions: {
+        series: {
+            lineWidth: 5
+        }
+    },
+    title: {
+      margin:25,
+      style: {
+                fontSize: '35px',
+                color:'#000000'
+            },
+        text:'Duration curve of DC, Techmin, Schedule and Optimal Schedule for ' +selectedGenerator
+    },
+    exporting:{
+      sourceWidth:2550,
+      sourceHeight:800,
+    }
+    ,
+    xAxis: {
+        title: {
+            margin:45,
+            text: 'Percentage',
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        },
+            labels: {
+            
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        }
+    },
+    yAxis: {
+
+        title: {
+          margin: 80,
+            style: {
+                fontSize: '35px',
+                color:'#000000',
+            },
+            text: 'MW'
+        },
+            labels: {
+            //distance:-100,
+            //overflow:'allow',
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        }
+    },
+    credits: {
+        enabled: false
+    },
+    series: [ {
+        name: 'Schedule',
+        data: finaldatasch,
+        color:'#000080'
+    }, {
+        name: 'Optimal Schedule',
+        data: finaldataopt,
+        color:'#FA8072'
+    }
+
+    , {
+        name: 'DC',
+        data: finaldatapmax,
+        color:'#FA8000'
+    } 
+    , {
+        name: 'TechMin',
+        data: finaldatapmin,
+        color:'#000000'
+    } 
+    ]
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//Duration graph of schramp and optramp
+
+Highcharts.chart('chart_div1', {
+
+    chart: {
+        type: 'line',
+        zoomType: 'xy'
+    }, legend: {
+              margin:25,
+              width:1000,
+              itemDistance: 150,
+              itemStyle: {
+                 fontSize: '25px', 
+                 color: '#000000'
+              }
+
+        },
+        plotOptions: {
+        series: {
+            lineWidth: 5
+        }
+    },
+    title: {
+      margin:25,
+      style: {
+                fontSize: '35px',
+                color:'#000000'
+            },
+        text:'Duration curve of Schedule ramp and Optimal Schedule ramp for ' +selectedGenerator
+    },
+    exporting:{
+      sourceWidth:2550,
+      sourceHeight:800,
+    }
+    ,
+    xAxis: {
+        title: {
+            margin:45,
+            text: 'Percentage',
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        },
+            labels: {
+            
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        }
+    },
+    yAxis: {
+
+        title: {
+          margin: 80,
+            style: {
+                fontSize: '35px',
+                color:'#000000',
+            },
+            text: 'MW'
+        },
+            labels: {
+            //distance:-100,
+            //overflow:'allow',
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        }
+    },
+    credits: {
+        enabled: false
+    },
+    series: [ {
+        name: 'Sch ramp',
+        data: finaldataschramp,
+        color:'#000080'
+    }, {
+        name: 'Optimal Sch ramp',
+        data: finaldataoptramp,
+        color:'#FA8072'
+    }
+ 
+    ]
+});
+
+
+
+
+
+
+
+
+
+
+
+//Duration graph of actramp and optramp
+
+Highcharts.chart('chart_div2', {
+
+    chart: {
+        type: 'line',
+        zoomType: 'xy'
+    }, legend: {
+              margin:25,
+              width:1000,
+              itemDistance: 150,
+              itemStyle: {
+                 fontSize: '25px', 
+                 color: '#000000'
+              }
+
+        },
+        plotOptions: {
+        series: {
+            lineWidth: 5
+        }
+    },
+    title: {
+      margin:25,
+      style: {
+                fontSize: '35px',
+                color:'#000000'
+            },
+        text:'Duration curve of Actual ramp and Optimal Schedule ramp for ' +selectedGenerator
+    },
+    exporting:{
+      sourceWidth:2550,
+      sourceHeight:800,
+    }
+    ,
+    xAxis: {
+        title: {
+            margin:45,
+            text: 'Percentage',
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        },
+            labels: {
+            
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        }
+    },
+    yAxis: {
+
+        title: {
+          margin: 80,
+            style: {
+                fontSize: '35px',
+                color:'#000000',
+            },
+            text: 'MW'
+        },
+            labels: {
+            //distance:-100,
+            //overflow:'allow',
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        }
+    },
+    credits: {
+        enabled: false
+    },
+    series: [ {
+        name: 'Actual ramp',
+        data: finaldataactramp,
+        color:'#000080'
+    }, {
+        name: 'Optimal Sch ramp',
+        data: finaldataoptramp,
+        color:'#FA8072'
+    }
+    ]
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//Diurnal graph of actramp and optramp
+
+Highcharts.chart('chart_div3', {
+
+    chart: {
+        type: 'line',
+        zoomType: 'xy'
+    }, legend: {
+              margin:25,
+              width:1000,
+              itemDistance: 150,
+              itemStyle: {
+                 fontSize: '25px', 
+                 color: '#000000'
+              }
+
+        },
+        plotOptions: {
+        series: {
+            lineWidth: 5
+        }
+    },
+    title: {
+      margin:25,
+      style: {
+                fontSize: '35px',
+                color:'#000000'
+            },
+        text:'Diurnal curve of  Actual ramp and Optimal Schedule ramp for ' +selectedGenerator
+    },
+    exporting:{
+      sourceWidth:2550,
+      sourceHeight:800,
+    }
+    ,
+    xAxis: {
+        title: {
+            margin:45,
+            text: 'Percentage',
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        },
+            labels: {
+            
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        }
+    },
+    yAxis: {
+
+        title: {
+          margin: 80,
+            style: {
+                fontSize: '35px',
+                color:'#000000',
+            },
+            text: 'MW'
+        },
+            labels: {
+            //distance:-100,
+            //overflow:'allow',
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        }
+    },
+    credits: {
+        enabled: false
+    },
+    series: [ {
+        name: 'Actual Ramp',
+        data: finaldataactdiurnal,
+        color:'#000080'
+    }, {
+        name: 'Optimal Sch Ramp',
+        data: finaldataoptdiurnal,
+        color:'#FA8072'
+    } 
+    ]
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//Duration graph of actramp and optramp
+
+Highcharts.chart('chart_div4', {
+
+     chart: {
+        type: 'line',
+        zoomType: 'xy'
+    }, legend: {
+              margin:25,
+              width:1000,
+              itemDistance: 150,
+              itemStyle: {
+                 fontSize: '25px', 
+                 color: '#000000'
+              }
+
+        },
+        plotOptions: {
+        series: {
+            lineWidth: 5
+        }
+    },
+    title: {
+      margin:25,
+      style: {
+                fontSize: '35px',
+                color:'#000000'
+            },
+        text:'Diurnal curve of Schedule Ramp and Optimal Schedule ramp for ' +selectedGenerator
+    },
+    exporting:{
+      sourceWidth:2550,
+      sourceHeight:800,
+    }
+    ,
+    xAxis: {
+        title: {
+            margin:45,
+            text: 'Percentage',
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        },
+            labels: {
+            
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        }
+    },
+    yAxis: {
+
+        title: {
+          margin: 80,
+            style: {
+                fontSize: '35px',
+                color:'#000000',
+            },
+            text: 'MW'
+        },
+            labels: {
+            
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        }
+    },
+    
+    series: [ {
+        name: 'Schedule Ramp',
+        data: finaldataschdiurnal,
+        color:'#000080'
+    }, {
+        name: 'Optimal Schedule Ramp',
+        data: finaldataoptdiurnal,
+        color:'#FA8072'
+    }
+
+     
+    ]
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+Highcharts.chart('chart_div5', {
+
+     chart: {
+        type: 'scatter',
+        zoomType: 'xy'
+    }, legend: {
+              margin:25,
+              width:1000,
+              itemDistance: 150,
+              itemStyle: {
+                 fontSize: '25px', 
+                 color: '#000000'
+              }
+
+        },
+        plotOptions: {
+        series: {
+            //lineWidth: 5
+        }
+    },
+    title: {
+      margin:25,
+      style: {
+                fontSize: '35px',
+                color:'#000000'
+            },
+        text:'Scatter plot of Actual Meter Reading vs Optimal Schedule for ' +selectedGenerator
+    },
+    exporting:{
+      sourceWidth:2550,
+      sourceHeight:800,
+    }
+    ,
+    xAxis: {
+        title: {
+            margin:45,
+            text: 'Actual Meter Reading (MW)',
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        },
+            labels: {
+            
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        }
+    },
+    yAxis: {
+
+        title: {
+          margin: 80,
+            style: {
+                fontSize: '35px',
+                color:'#000000',
+            },
+            text: 'Optimal Schedule (MW)'
+        },
+            labels: {
+            
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        }
+    },
+    
+    series: [ {
+        name: 'Actual Meter Reading vs Optimal Schedule',
+        data: scatter_act_opt,
+        color:'#000080'
+    }
+
+     
+    ]
+});
+
+
+
+
+
+console.log(xaxisdata);
+
+
+Highcharts.chart('chart_div6', {
+
+     chart: {
+        type: 'scatter',
+        zoomType: 'xy'
+    }, legend: {
+              margin:25,
+              width:1200,
+              itemDistance: 150,
+              itemStyle: {
+                 fontSize: '25px', 
+                 color: '#000000'
+              }
+
+        },
+        plotOptions: {
+                scatter: {
+                    marker: {
+                        radius: 3,
+                        states: {
+                            hover: {
+                                enabled: true,
+                                lineColor: 'rgb(100,100,100)'
+                            }
+                        }
+                    },
+                    states: {
+                        hover: {
+                            marker: {
+                                enabled: false
+                            }
+                        }
+                    }
+                }
+            },
+    title: {
+      margin:25,
+      style: {
+                fontSize: '35px',
+                color:'#000000'
+            },
+        text:'Scatter plot of Actual Meter Reading vs Optimal Schedule for ' +selectedGenerator
+    },
+    exporting:{
+      sourceWidth:2550,
+      sourceHeight:800,
+    }
+    ,
+    xAxis: {
+        title: {
+            margin:125,
+            text: 'Actual Meter Reading (MW)',
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        },
+        categories: xaxisdata,
+            labels: {
+            
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        }
+    },
+    yAxis: {
+
+        title: {
+          margin: 80,
+            style: {
+                fontSize: '35px',
+                color:'#000000',
+            },
+            text: 'Optimal Schedule (MW)'
+        },
+            labels: {
+            
+            style: {
+                fontSize: '35px',
+                color:'#000000'
+            }
+        }
+    },
+    
+    series: [ {
+        name: 'Schedule',
+        data: scatter_sch,
+        color:'#000080'
+    },
+     {
+        name: 'Optimal Schedule',
+        data: scatter_opt,
+        color:'#FA8072'
+    }, {
+        name: 'DC',
+        data: scatter_pmax,
+        color:'#FA8000'
+    }, {
+        name: 'Tech Min',
+        data: scatter_pmin,
+        color:'#000000' 
+    }
+
+     
+    ]
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+});
+
+
+      });
+
+}
+
+
+
+
+
+
+</script>
+
+
+<div class="row">
+
+               <div class="col-lg-2">
+    <label for="calender1">FROM DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+
+               <div class="col-lg-2">
+    <label for="calender2">TO DATE</label>
+     <input type="text" class="form-control"   id="calender2">
+</div>
+
+      <div class="col-lg-3">
+          <label>GENERATORS</label>
+          <select id="dropdowngen" class="form-control"></select>
+      </div>
+
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-outline-primary form-control" onclick="showPattern()" >submit</button>
+</div>
+</div>
+<div id="chart_div" style="width: 100%; height: 500px;"></div>
+<div id="chart_cumm" class="col-lg-8 offset-lg-2"></div>
+<div id="chart_div1" style="width: 100%; height: 500px;"></div>
+<div id="chart_div2" style="width: 100%; height: 500px;"></div> 
+<div id="chart_div3" style="width: 100%; height: 500px;"></div>
+<div id="chart_div4" style="width: 100%; height: 500px;"></div>
+<div id="chart_div5" style="width: 100%; height: 500px;"></div>
+<div id="chart_div6" style="width: 100%; height: 500px;"></div>

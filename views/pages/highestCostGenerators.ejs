@@ -1,0 +1,251 @@
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script type="text/javascript">
+
+      var selectedDate='';
+      var selectedGenerator;
+      var selectedGenerator1;
+      var chartdata;
+      var final;
+       var chartdata1;
+      var final1;
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+      $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+document.getElementById("calender2").value = today;
+/*
+$.post('/gen/getAllGens',function(res){
+var gens=JSON.parse(res);
+console.log(gens);
+  htm='';
+htm+='<option value="ALL">ALL</option>';
+htm+='<option value="AR">NER</option>';
+htm+='<option value="SR">SR</option>';
+htm+='<option value="WR">WR</option>';
+htm+='<option value="ER">ER</option>';
+htm+='<option value="NR">NR</option>';
+for(var i=0;i<gens.length;i++){
+htm+='<option value="'+gens[i]['id']+'">'+gens[i]['name']+'</option>';}
+document.getElementById('dropdown').innerHTML=htm;
+});     */
+
+});
+
+function showOpt(){
+  selectedDate=document.getElementById("calender1").value;
+var selectedGen=$("#dropdown").val();
+
+var todate=document.getElementById("calender2").value;
+
+
+
+  var from=$( "#calender1" ).datepicker('getDate');
+  var dates=[];
+  var i=1;
+  dates.push(selectedDate);
+  if(selectedDate!=todate)
+{  
+
+  do{   
+
+  var x=from;
+   x.setDate(x.getDate()+i);
+   var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=todate);
+
+}
+
+
+
+$.post('/GenRates/getHighestCostGen',{dates:dates},function(res){
+   
+chartdata=JSON.parse(res);
+console.log(chartdata);
+//console.log(chartdata['01-Dec-2019']);
+
+
+$.post('/gamsdata/getScheduleData',{dates:dates},function(res){
+    console.log(res);
+    res= JSON.parse(res)
+    var finalData=[];
+    var xaxis=[];
+    for(var i=0;i<dates.length;i++)
+    {
+      var genids=[];
+      var allgensch={};
+      for(var j=0;j<res[i].length;j++)
+      {
+        var genid=parseInt(res[i][j]['id'].split(dates[i])[1]);
+        //console.log(genid)
+        if(genid.toString().length!=1)
+        {
+          //console.log(genid)
+          allgensch[genid]=res[i][j]['sch'];
+        genids.push(genid);
+      }
+      }
+     // console.log(genids);
+      console.log(allgensch);
+
+
+      var month_names =["Jan","Feb","Mar",
+                      "Apr","May","Jun",
+                      "Jul","Aug","Sep",
+                      "Oct","Nov","Dec"];
+
+
+  
+   var stdate=dates[i].split("-")[0]+"-"+month_names[parseInt(dates[i].split("-")[1])-1]+"-"+dates[i].split("-")[2];
+
+
+   var gencosts=chartdata[stdate];
+
+
+      var sortedgencosts=[];
+      for(var j=0;j<genids.length;j++)
+      {
+          sortedgencosts.push([genids[j],parseFloat(gencosts[genids[j]])]);
+      }
+
+      sortedgencosts.sort(function(a,b){ return a[1]-b[1]; })
+      console.log(sortedgencosts);
+
+      var tempData=[];
+
+      for(var j=0;j<96;j++)
+      {
+          xaxis.push(dates[i] + ' : ' + parseInt(j+1));
+          var k=sortedgencosts.length-1;
+          var flag=0;
+          while(k>=0)
+          {
+            if(allgensch[sortedgencosts[k][0]][j] != 0)
+            {
+              finalData.push(sortedgencosts[k][1]);
+              flag=1;
+              break;
+            }
+            k=k-1;
+          }
+          if(flag==0)
+          {
+           finalData.push(0);
+           console.log('found zero'); 
+          }
+          
+      }
+
+      //finalData.push(tempData);
+    }
+
+    console.log(finalData);
+
+
+
+    Highcharts.chart('chart_div', {
+
+    chart: {
+        type: 'area',
+        zoomType: 'xy'
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        },
+    title: {
+        text:'Highest Cost Generation from  ' + selectedDate + ' to ' + todate
+    },
+    xAxis: {
+        categories: xaxis,
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    yAxis: {
+       
+        title: {
+
+            text: 'Paisa'
+        }
+      }, 
+    
+    credits: {
+        enabled: false
+    },
+    series: [{
+        name: 'Highest Cost Generation',
+        data: finalData,
+        color:' #ADD8E6'
+    }]
+});
+
+
+
+
+
+});
+
+
+   
+      });
+
+}
+
+
+
+    </script>
+
+
+      <div class="row">
+               <div class="col-lg-2">
+    <label for="calender1">FROM DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+
+               <div class="col-lg-2">
+    <label for="calender2">TO DATE</label>
+     <input type="text" class="form-control"   id="calender2">
+</div>
+        <!--<div class="col-lg-4">
+          <label>Generators</label>
+          <select id="dropdown" class="form-control">
+</select>
+      </div> -->
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-outline-primary form-control" onclick="showOpt()" >submit</button>
+</div>
+</div>
+<div id="chart_div" style="width: 100%; height: 500px;"></div>

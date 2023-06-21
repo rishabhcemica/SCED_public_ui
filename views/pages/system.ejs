@@ -1,0 +1,149 @@
+
+     <script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<style type="text/css">
+  thead#sysreport {
+    background: bisque;
+}
+
+table.table.table-bordered {
+    background: ghostwhite;
+}
+</style>
+<script type="text/javascript">
+  
+
+   $(function(){
+
+  $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+    $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+document.getElementById("calender2").value = today;
+
+
+});
+
+   function show(){
+
+
+
+
+var from=$( "#calender1" ).datepicker('getDate');
+var fromDate=document.getElementById("calender1").value;
+var toDate=document.getElementById("calender2").value;
+  var dates=[];
+  var i=1;
+  dates.push(fromDate);
+  if(fromDate==toDate)
+  {
+
+  }
+else
+{  do{   
+
+  var x=from;
+   x.setDate(x.getDate()+i);
+   var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=toDate);}
+
+
+
+$.post('/gamspwc/getSystemReport',{dates:dates},function(res){
+  var systable=JSON.parse(res);
+console.log(systable);
+  var htm='';
+ htm+='<table class="table table-bordered"><thead id="sysreport"><tr><th>Date</th><th>Average MW</th><th>Pre SCED Cost(Cr.)</th><th>Post SCED Cost(Cr.)</th><th>Pre-Post (Cr.)</th><th>Pre SCED (paisa/unit)</th><th>Post SCED (paisa/unit)</th><th>Pre-Post (paisa/unit)</th><th>Perturbation Average(MW)</th></tr></thead><tbody>';
+
+var dt=[];
+var avgmw=[];
+var precost=[];
+var postcost=[];
+var preunit=[];
+var postunit=[];
+var pert=[];
+ for(var i=0;i<systable.length;i++){
+
+htm+='<tr><td>'+systable[i][0]+'</td><td>'+(systable[i][1]/96).toFixed(2)+'</td><td>'+(systable[i][3]/400).toFixed(2)+'</td><td>'+(systable[i][4]/400).toFixed(2)+'</td><td>'+((systable[i][3]/400)-(systable[i][4]/400)).toFixed(2)+'</td><td>'+(systable[i][3]*10000/systable[i][1]).toFixed(2)+'</td><td>'+(systable[i][4]*10000/systable[i][2]).toFixed(2)+'</td><td>'+((systable[i][3]*10000/systable[i][1])-(systable[i][4]*10000/systable[i][2])).toFixed(2)+'</td><td>'+(systable[i][5]/96).toFixed(2)+'</td></tr>';
+dt.push(systable[i][0]);
+avgmw.push(parseInt(systable[i][1]/96));
+precost.push(Math.round((systable[i][3]/400)*100)/100);
+postcost.push(Math.round((systable[i][4]/400)*100)/100);
+preunit.push(Math.round((systable[i][3]*10000/systable[i][1])*100)/100);
+postunit.push(Math.round((systable[i][4]*10000/systable[i][2])*100)/100);
+pert.push(parseInt(systable[i][5]/96));
+
+ }
+
+document.getElementById('systemReport').innerHTML=htm;
+
+
+
+}); 
+
+
+
+   }
+
+
+</script>
+
+<div class="row">
+
+               <div class="col-lg-3">
+    <label for="calender1">FROM DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+
+               <div class="col-lg-3">
+    <label for="calender2">TO DATE</label>
+     <input type="text" class="form-control"   id="calender2">
+</div>
+ 
+<div class="col-lg-3">
+<label for="show">EDIT</label>
+ <button class="btn btn-outline-primary form-control" id="show" onclick="show()">SHOW</button>
+</div>
+
+</div>
+<div class="row" id="systemReport"></div>
+<div class="row">
+<div id="chart_div1" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+<div id="chart_div2" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+</div>
+<div class="row">
+<div id="chart_div3" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+<div id="chart_div4" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+</div>
+<div class="row">
+<div id="chart_div5" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+<div id="chart_div6" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+</div>
+<div class="row">
+<div id="chart_div7" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+
+</div>

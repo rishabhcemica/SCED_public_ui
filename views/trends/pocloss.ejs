@@ -1,0 +1,266 @@
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script type="text/javascript">
+
+      var selectedDate='';
+      var tdate='';
+      var chartdata;
+      var selectedGenerator;
+      var final;
+      // var pocloss={'3007':'0.8','3011':'0.8','3012':'0.8','3016':'2.42','3017':'2.42','3018':'2.42','3020':'2.49','3050':'1.36','3022':'1.36','3023':'1.36','3024':'1.36','5012':'1.48','5008':'2.1','5009':'2.1','5011':'1.6','5029':'1.6','5023':'1.1','5031':'1.35','5013':'2.04','5014':'1.73','5015':'1.73','5017':'2.35','5018':'2.35','5019':'2.35','5020':'2.35','5021':'2.35','1009':'0.71','1003':'0.77','1008':'0.77','1004':'1.02','1006':'1.02','1012':'0.65','1011':'1.16','1005':'1.15','4031':'1.21','4015':'1.15','4013':'1.15','4005':'1.15','4006':'1.15','4007':'1.9','4008':'1.15','4009':'1.15','4010':'0.71','4011':'0.77','4014':'2.02','4012':'0.65','2011':'1.72','1016':'0','1015':'0'};
+      // var nr=0,sr=0,ner=0,er=0,wr=0,all=0;
+      // for(var key in pocloss){
+      //   if(key[0]=='1')
+      //     er+=parseFloat(pocloss[key]);
+      //   else if(key[0]=='2')
+      //     ner+=parseFloat(pocloss[key]);
+      //   else if(key[0]=='3')
+      //     nr+=parseFloat(pocloss[key]);
+      //   else if(key[0]=='4')
+      //     sr+=parseFloat(pocloss[key]);
+      //   else
+      //     wr+=parseFloat(pocloss[key]);
+      // }
+      // all=er+ner+wr+sr+nr;
+      // pocloss['NR']=nr.toString();
+      // pocloss['WR']=wr.toString();
+      // pocloss['AR']=ner.toString();
+      // pocloss['SR']=sr.toString();
+      // pocloss['ER']=er.toString();
+      // pocloss['ALL']=all.toString();
+
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+    $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+$('#calender2').val(today);
+
+$.post('/gen/getAllGens',function(res){
+var gens=JSON.parse(res);
+console.log(gens);
+  htm='';
+htm+='<option value="ALL">ALL</option>';
+htm+='<option value="AR">NER</option>';
+htm+='<option value="SR">SR</option>';
+htm+='<option value="WR">WR</option>';
+htm+='<option value="ER">ER</option>';
+htm+='<option value="NR">NR</option>';
+for(var i=0;i<gens.length;i++){
+htm+='<option value="'+gens[i]['id']+'">'+gens[i]['name']+'</option>';}
+document.getElementById('dropdown').innerHTML=htm;
+});
+
+});
+
+function showOpt(){
+
+  selectedDate=document.getElementById("calender1").value;
+var selectedGen=$("#dropdown").val();
+
+tdate=document.getElementById("calender2").value;
+
+
+
+  var from=$( "#calender1" ).datepicker('getDate');
+  var dates=[];
+  var i=1;
+  dates.push(selectedDate);
+  if(selectedDate!=tdate)
+{  
+
+  do{   
+
+  var x=from;
+   x.setDate(x.getDate()+i);
+   var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=tdate);
+
+}
+
+
+
+
+
+
+
+
+
+$.post('/gamsdata/getTodayDataDateLoss',{selectedDate:dates,selectedGen:selectedGen},function(res){
+   selectedGenerator=idtoname[selectedGen];
+   if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+chartdata=JSON.parse(res);
+console.log(chartdata);
+var finaldata=[];
+
+var xaxis=[];
+var yaxis=[];
+
+var tt=[];
+var cumm=0;
+var minimum,maximum;
+tt.push("Generator");
+tt.push("POC LOSS");
+
+
+finaldata.push(tt);
+
+
+
+
+minimum=parseInt((chartdata[1][2]-chartdata[1][1]));
+maximum=parseInt((chartdata[1][2]-chartdata[1][1]));
+
+for(var i=1;i<chartdata.length;i++){
+var temp=[];
+xaxis.push(((i-1)%96 + 1).toString());
+yaxis.push(parseInt((chartdata[i][2]-chartdata[i][1])));
+
+temp.push(((i-1)%96 + 1).toString());
+temp.push(chartdata[i][2]-chartdata[i][1]);
+//temp.push(chartdata[i][3]);
+//temp.push(chartdata[i][4]);
+cumm+=parseInt((chartdata[i][2]-chartdata[i][1]));
+
+if(maximum < parseInt((chartdata[i][2]-chartdata[i][1]))){
+  maximum = parseInt((chartdata[i][2]-chartdata[i][1]))
+}
+
+if(minimum > parseInt((chartdata[i][2]-chartdata[i][1]))){
+  minimum = parseInt((chartdata[i][2]-chartdata[i][1]))
+}
+
+
+finaldata.push(temp);
+//console.log(temp);
+}
+cumm=Math.round(cumm*100)/100;
+var avg=cumm/(dates.length);
+console.log(finaldata);
+//final=finaldata;
+ //google.charts.load('current', {'packages':['corechart']});
+ //     google.charts.setOnLoadCallback(drawChart);
+
+
+
+
+
+
+
+
+Highcharts.chart('chart_div', {
+
+    chart: {
+        type: 'area'
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        }, yAxis: {
+       
+        title: {
+
+            text: 'MW'
+        }
+    },
+
+    chart: {
+        zoomType: 'xy'
+    },
+
+    title: {
+        text: 'Loss For '+selectedGenerator+' From '+selectedDate + ' To ' + tdate
+    },
+    xAxis: {
+        categories: xaxis,
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    
+    credits: {
+        enabled: false
+    },
+    series: [ {
+        name: 'Loss in (MW)',
+        data: yaxis,
+        //color:' rgba(230,230,0, .1)'
+    }]
+});
+
+
+
+      document.getElementById('chart_cumm').innerHTML="<h5>Cumulative Loss :  "+cumm.toFixed(2)+" MW </h5>";
+      document.getElementById('chart_min').innerHTML="<h5>Minimum Loss :  "+minimum.toFixed(2)+" MW </h5>";
+      document.getElementById('chart_max').innerHTML="<h5>Maximum Loss  :  "+maximum.toFixed(2)+" MW </h5>";
+      document.getElementById('chart_avg').innerHTML="<h5>Average Loss  :  "+avg.toFixed(2)+" MW </h5>";
+      document.getElementById('chart_avg_TB').innerHTML="<h5>Average Loss (per TimeBlock)  :  "+(avg/96).toFixed(2)+" MW </h5>";
+      
+      });
+
+}
+
+
+
+    </script>
+
+
+      <div class="row">
+
+<div class="col-lg-2">
+    <label for="calender1">FROM DATE:</label>
+    <input type="text" class="form-control"   id="calender1">
+</div>
+
+<div class="col-lg-2">
+    <label for="calender2">TO DATE:</label>
+    <input type="text" class="form-control"   id="calender2">
+</div>
+
+<div class="col-lg-4">
+          <label>Generators</label>
+          <select id="dropdown" class="form-control"></select>
+</div>
+
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-outline-primary form-control" onclick="showOpt()" >submit</button>
+</div>
+</div>
+<div id="chart_div" style="width: 100%; height: 500px;"></div>
+<div id="chart_cumm" style="width: 100%;" class="col-lg-4 offset-lg-4"></div>
+<div id="chart_min" style="width: 100%;" class="col-lg-4 offset-lg-4"></div>
+<div id="chart_max" style="width: 100%;" class="col-lg-4 offset-lg-4"></div>
+<div id="chart_avg" style="width: 100%;" class="col-lg-4 offset-lg-4"></div>
+<div id="chart_avg_TB" style="width: 100%;" class="col-lg-4 offset-lg-4"></div>
+

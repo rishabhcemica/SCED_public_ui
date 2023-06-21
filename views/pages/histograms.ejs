@@ -1,0 +1,1414 @@
+
+      <script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="https://code.highcharts.com/modules/histogram-bellcurve.js"></script>
+
+<script type="text/javascript">
+  
+
+      var selectedDate='';
+      var tdate='';
+      var chartdata;
+      var selectedGenerator;
+      var selectedPattern;
+      var remaining=0;
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+    $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+   // $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+document.getElementById("calender2").value = today;
+$.post('/gen/getAllGens',function(res){
+var gens=JSON.parse(res);
+console.log(gens);
+  htm='';
+htm+='<option value="ALL">ALL</option>';
+htm+='<option value="ALLAGC">AGC</option>';
+htm+='<option value="AR">NER</option>';
+htm+='<option value="SR">SR</option>';
+htm+='<option value="WR">WR</option>';
+htm+='<option value="ER">ER</option>';
+htm+='<option value="NR">NR</option>';
+
+
+for(var i=0;i<gens.length;i++){
+htm+='<option value="'+gens[i]['id']+'">'+gens[i]['name']+'</option>';}
+
+
+document.getElementById('dropdowngen').innerHTML=htm;
+
+
+htm2='';
+htm2+='<option value="SMP">SMP</option>';
+htm2+='<option value="MCP">MCP</option>';
+htm2+='<option value="UMCP">UMCP</option>';
+htm2+='<option value="AVG">AVERAGE PRICE(P/U)</option>';
+htm2+='<option value="OS">OPTIMAL SCH AND SCH</option>';
+htm2+='<option value="SAVING">REDUCTION IN COST</option>';
+htm2+='<option value="COST">COST</option>';
+htm2+='<option value="RESERVE1">RAMPING RESERVES</option>';
+htm2+='<option value="RESERVE2">SPINNING RESERVES</option>';
+
+htm2+='<option value="ACTUAL">ACTUAL METER READING</option>';
+htm2+='<option value="pocloss">LOSS</option>';
+htm2+='<option value="PERTURBATIONS">PERTURBATIONS</option>'; 
+
+// htm2+='<option value="PMINDUAL">DUAL OF PMIN</option>';
+//htm2+='<option value="RESERVE2">SPINNING--- RESERVES</option>';
+
+//console.log(htm2):
+document.getElementById('dropdownpattern').innerHTML=htm2;
+
+
+
+
+});
+
+ 
+});
+
+
+// function bsearch(arr,low,high ,val){
+
+// var mid = parseInt((low+high)/2);
+
+// if(low < high){
+
+// if(arr[mid]< val){
+//   bsearch(arr,mid,high,val);
+// }else{
+// remaining=mid;
+// bsearch(arr,low,mid,val);
+
+// }
+// }
+// else{
+//   console.log("in return");
+//   return;
+// }
+
+// }
+
+
+
+
+function showPattern(){
+  selectedDate=document.getElementById("calender1").value;
+  tdate=document.getElementById("calender2").value;
+ var selectedGen=$("#dropdowngen").val();
+ var selectedPat=$('#dropdownpattern').val();
+
+
+  var from=$( "#calender1" ).datepicker('getDate');
+  var dates=[];
+  var i=1;
+  dates.push(selectedDate);
+  if(selectedDate!=tdate)
+{  
+
+  do{   
+
+  var x=from;
+   x.setDate(x.getDate()+i);
+   var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=tdate);
+
+}
+
+
+
+document.getElementById('chart_div').innerHTML='';
+document.getElementById('chart_cumm').innerHTML='';
+document.getElementById('chart_div1').innerHTML='';
+document.getElementById('chart_div2').innerHTML='';
+document.getElementById('chart_div3').innerHTML='';
+
+
+
+//console.log('selectedPat is: ', selectedPat);
+
+
+ if(selectedPat=="SMP"){
+
+
+
+
+
+$.post('/marginalcost/getTodayCost',{selectedDate:dates},function(res){
+var div=0;
+var chartdata=JSON.parse(res);
+console.log("Chart data");
+console.log(chartdata);
+var ner=[];
+var nr=[];
+var sr=[];
+var ai=[];
+var xaxis=[];
+
+var days=dates.length;
+
+var arpat=[];
+ var nrpat=[];
+ var srpat=[];
+ var allpat=[];
+
+for(var i=1;i<chartdata.length;i++){
+arpat.push(chartdata[i][1]);
+nrpat.push(chartdata[i][2]);
+srpat.push(chartdata[i][3]);
+allpat.push(chartdata[i][4]);
+}
+
+console.log(arpat);
+Highcharts.chart('chart_div', {
+
+   chart: {
+        type: 'histogram',
+        zoomType: 'xy'
+    },
+
+  title: {
+    text: 'SMP histogram from ' + dates[0] + ' to: ' + dates[dates.length-1] + ', Total TimeBlocks: ' + dates.length*96
+  },
+  xAxis: [{
+    title: { text: 'Paisa' },
+    alignTicks: false
+  }],
+
+  yAxis: [{
+    title: { text: 'Frequency' }
+  }],
+
+    series:[{
+    visible:false,
+    showInLegend:false,
+    id:"id0",
+    data: nrpat
+      },{
+    name:"NR",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id0",
+    binWidth:1},
+    
+    {visible:false,
+    showInLegend:false,
+    id:"id1",
+    data:allpat
+      },
+    {
+    name:"Al",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id1",
+    binWidth:1,
+    zIndex:0},
+    
+    {visible:false,
+    showInLegend:false,
+    id:"id2",
+    data:srpat
+      },
+    {
+    name:"SR",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id2",
+    binWidth:1,
+    zIndex:0},
+    
+    {visible:false,
+    showInLegend:false,
+    id:"id3",
+    data:arpat
+      },
+    {
+    name:"NER",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id3",
+    binWidth:1,
+    zIndex:0}
+    ]
+});
+
+
+
+
+      });
+
+
+
+
+
+ }
+
+
+else if(selectedPat=="MCP")
+{
+  console.log('in mcp');
+  $.post('/gamspwc/getMCPByDates',{dates:dates},function(res){
+        var mcparr=res['mcparr'];
+
+
+Highcharts.chart('chart_div', {
+
+   chart: {
+        type: 'histogram',
+        zoomType: 'xy'
+    },
+
+  title: {
+    text: 'MCP histogram from ' + dates[0] + ' to: ' + dates[dates.length-1] + ', Total TimeBlocks: ' + dates.length*96
+  },
+  xAxis: [{
+    title: { text: 'Paisa' },
+    alignTicks: false
+  }],
+
+  yAxis: [{
+    title: { text: 'Frequency' }
+  }],
+
+    series:[{
+    visible:false,
+    showInLegend:false,
+    id:"id0",
+    data: mcparr
+      },{
+    name:"Frequency:",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id0",
+    binWidth:1}
+    ]
+});
+
+
+
+
+
+
+
+
+
+      });
+
+}
+
+
+else if(selectedPat=="UMCP")
+{
+  
+
+    $.post('/iexmcp/getIEXMCPData',{dates:dates},function(res){
+        
+        
+        var umcparr=res;
+        
+        for(var i=0;i<dates.length;i++)
+        {
+          for(var j=0;j<96;j++)
+          {
+            umcparr[i*96 + j] = (parseInt(umcparr[i*96 + j])/10); 
+          }
+        }
+
+
+
+Highcharts.chart('chart_div', {
+
+   chart: {
+        type: 'histogram',
+        zoomType: 'xy'
+    },
+
+  title: {
+    text: 'UMCP histogram from ' + dates[0] + ' to: ' + dates[dates.length-1] + ', Total TimeBlocks: ' + dates.length*96
+  },
+  xAxis: [{
+    title: { text: 'Paisa' },
+    alignTicks: false
+  }],
+
+  yAxis: [{
+    title: { text: 'Frequency' }
+  }],
+
+    series:[{
+    visible:false,
+    showInLegend:false,
+    id:"id0",
+    data: umcparr
+      },{
+    name:"Frequency:",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id0",
+    binWidth:1}
+    ]
+});
+
+
+
+
+
+
+
+
+      });
+
+}
+
+
+
+else if(selectedPat=="AVG")
+{
+  console.log('in average price');
+
+  $.post('/gamspwc/getAveragePrice',{date:dates,region:'0'},function(res){
+   
+chartdata=JSON.parse(res);
+
+
+console.log(chartdata);
+var postAVG=[];
+for(var i=0;i<chartdata.length;i++){
+  if(!isNaN(parseInt(chartdata[i][5]*10000/chartdata[i][3])))
+  postAVG.push(parseInt(chartdata[i][5]*10000/chartdata[i][3]));
+}
+
+
+
+
+
+Highcharts.chart('chart_div', {
+
+   chart: {
+        type: 'histogram',
+        zoomType: 'xy'
+    },
+
+  title: {
+    text: 'Average Price(p/u) histogram from ' + dates[0] + ' to: ' + dates[dates.length-1] + ', Total TimeBlocks: ' + dates.length*96
+  },
+  xAxis: [{
+    title: { text: 'Paisa/Unit' },
+    alignTicks: false
+  }],
+
+  yAxis: [{
+    title: { text: 'Frequency' }
+  }],
+
+    series:[{
+    visible:false,
+    showInLegend:false,
+    id:"id0",
+    data: postAVG
+      },{
+    name:"Frequency:",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id0",
+    binWidth:1}
+    ]
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+});
+
+}
+
+
+ else if(selectedPat=="COST"){
+
+
+
+$.post('/gamsdata/getTodaySaving',{selectedDate:dates,selectedGen:selectedGen,flag:2},function(res){
+   
+var chartdata=JSON.parse(res);
+selectedGenerator=idtoname[selectedGen];
+
+//console.log(chartdata);
+if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+
+
+var ocost=[];
+var pcost=[];
+
+
+console.log(chartdata);
+
+var days=dates.length;
+
+for(var i=1;i<chartdata.length;i++)
+{
+  ocost.push(chartdata[i][1]);
+  pcost.push(chartdata[i][2]);
+}
+
+
+Highcharts.chart('chart_div', {
+
+   chart: {
+        type: 'histogram',
+        zoomType: 'xy'
+    },
+
+  title: {
+    text: 'Cost histogram from ' + dates[0] + ' to: ' + dates[dates.length-1] + ', Total TimeBlocks: ' + dates.length*96
+  },
+  xAxis: [{
+    title: { text: 'Paisa' },
+    alignTicks: false
+  }],
+
+  yAxis: [{
+    title: { text: 'Frequency' }
+  }],
+
+    series:[{
+    visible:false,
+    showInLegend:false,
+    id:"id0",
+    data: ocost
+      },{
+    name:"Optimal cost:",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id0",
+    binWidth:1},
+    {
+    visible:false,
+    showInLegend:false,
+    id:"id1",
+    data: pcost
+      },{
+    name:"Present cost:",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id1",
+    binWidth:1}
+    ]
+});
+
+
+
+
+
+ // google.charts.load('current', {'packages':['corechart']});
+ //      google.charts.setOnLoadCallback(drawChart);
+       // document.getElementById('chart_cumm').innerHTML="<h3>Cummulative Net  :"+cumm.toString()+" (in Lakhs) </h3>";
+   
+      });
+
+
+
+ }else if(selectedPat=="SAVING"){
+
+
+
+
+  $.post('/gamsdata/getTodaySaving',{selectedDate:dates,selectedGen:selectedGen,flag:0},function(res){
+   
+var chartdata=JSON.parse(res);
+
+
+console.log(chartdata);
+
+
+selectedGenerator=idtoname[selectedGen];
+
+if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+
+
+var savingsData=[];
+
+for(var i=1;i<chartdata.length;i++)
+{
+  if(chartdata[i][1] >= -75) // removing outliers value > 75
+  savingsData.push(chartdata[i][1]);
+  //savingsData.push(Math.abs(chartdata[i][1]));
+}
+
+
+ Highcharts.chart('chart_div', {
+
+   chart: {
+        type: 'histogram',
+        zoomType: 'xy'
+    },
+
+  title: {
+    text: 'Reduction in cost (savings) histogram from ' + dates[0] + ' to: ' + dates[dates.length-1] + ', Total TimeBlocks: ' + dates.length*96
+  },
+  xAxis: [{
+    title: { text: 'Paisa' },
+    alignTicks: false
+  }],
+
+  yAxis: [{
+    title: { text: 'Frequency' }
+  }],
+
+    series:[{
+    visible:false,
+    showInLegend:false,
+    id:"id0",
+    data: savingsData
+      },{
+    name:"Savings count: ",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id0",
+    binWidth:1}
+    ]
+});
+
+
+
+//document.getElementById('chart_cumm').innerHTML="<h3>Cumulative Net  :"+cumm.toString()+" (in Lakhs) </h3>";
+
+});
+
+
+
+
+ }else if(selectedPat=="RESERVE1"){
+
+
+
+
+$.post('/gamsdata/getTodayDataDate',{selectedDate:dates,selectedGen:selectedGen},function(res){
+  var chartdata=JSON.parse(res);
+
+//   $.post('/genrates/getRampDatesData',{sdate:dates},function(res){
+
+// var rampData=JSON.parse(res);
+
+selectedGenerator=idtoname[selectedGen];
+if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+console.log(chartdata);
+
+var upReserve=[];
+var downReserve=[];
+
+
+
+for(var i=1;i<chartdata.length;i++){
+upReserve.push(parseInt(chartdata[i][5]));
+downReserve.push(parseInt(chartdata[i][6]));
+}
+
+
+
+
+
+Highcharts.chart('chart_div', {
+
+   chart: {
+        type: 'histogram',
+        zoomType: 'xy'
+    },
+
+  title: {
+    text: 'RAMPING RESERVES histogram from ' + dates[0] + ' to: ' + dates[dates.length-1] + ', Total TimeBlocks: ' + dates.length*96
+  },
+  xAxis: [{
+    title: { text: 'MW' },
+    alignTicks: false
+  }],
+
+  yAxis: [{
+    title: { text: 'Frequency' }
+  }],
+
+    series:[{
+    visible:false,
+    showInLegend:false,
+    id:"id0",
+    data: upReserve
+      },{
+    name:"UP Reserve:",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id0",
+    binWidth:1},
+    {
+    visible:false,
+    showInLegend:false,
+    id:"id1",
+    data: downReserve
+      },{
+    name:"DOWN Reserve:",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id1",
+    binWidth:1}
+    ]
+});
+
+
+
+
+
+
+
+
+
+
+
+  });
+
+ }else if(selectedPat=="RESERVE2"){
+
+
+
+
+$.post('/gamsdata/getTodayDataDate',{selectedDate:dates,selectedGen:selectedGen},function(res){
+  var chartdata=JSON.parse(res);
+
+
+selectedGenerator=idtoname[selectedGen];
+if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+console.log(chartdata);
+
+var upReserve=[];
+var downReserve=[];
+
+for(var i=1;i<chartdata.length;i++)
+{
+  upReserve.push(chartdata[i][3] - chartdata[i][2]);
+  downReserve.push(chartdata[i][2] - chartdata[i][4]);
+}
+
+
+Highcharts.chart('chart_div', {
+
+   chart: {
+        type: 'histogram',
+        zoomType: 'xy'
+    },
+
+  title: {
+    text: 'RAMPING RESERVES histogram from ' + dates[0] + ' to: ' + dates[dates.length-1] + ', Total TimeBlocks: ' + dates.length*96
+  },
+  xAxis: [{
+    title: { text: 'MW' },
+    alignTicks: false
+  }],
+
+  yAxis: [{
+    title: { text: 'Frequency' }
+  }],
+
+    series:[{
+    visible:false,
+    showInLegend:false,
+    id:"id0",
+    data: upReserve
+      },{
+    name:"UP Reserve:",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id0",
+    binWidth:1},
+    {
+    visible:false,
+    showInLegend:false,
+    id:"id1",
+    data: downReserve
+      },{
+    name:"DOWN Reserve:",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id1",
+    binWidth:1}
+    ]
+});
+
+
+
+  });
+
+
+
+
+ }
+ else if(selectedPat=="OS"){
+
+
+
+$.post('/gamsdata/getTodayDataDate',{selectedDate:dates,selectedGen:selectedGen},function(res){
+   
+var chartdata=JSON.parse(res);
+selectedGenerator=idtoname[selectedGen];
+if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+console.log(chartdata);
+
+
+var sch=[];
+var opt=[];
+var pmax=[];
+
+
+
+
+for(var i=1;i<chartdata.length;i++)
+{
+  sch.push(parseInt(chartdata[i][1]));
+  opt.push(parseInt(chartdata[i][2]));
+  pmax.push(parseInt(chartdata[i][3]));
+  
+}
+
+console.log('sch');
+console.log(sch);
+
+
+ Highcharts.chart('chart_div', {
+
+   chart: {
+        type: 'histogram',
+        zoomType: 'xy'
+    },
+
+  title: {
+    text: 'Schedule, Optimal Schedule and DC histogram from ' + dates[0] + ' to: ' + dates[dates.length-1] + ', Total TimeBlocks: ' + dates.length*96
+  },
+  xAxis: [{
+    title: { text: 'Value' },
+    alignTicks: false
+  }],
+
+  yAxis: [{
+    title: { text: 'Frequency' }
+  }],
+
+    series:[{
+    visible:false,
+    
+    showInLegend:false,
+    id:"id0",
+    data: sch
+      },{
+    name:"Schedule ",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id0",
+    binWidth:1},
+    {
+    visible:false,
+    showInLegend:false,
+    id:"id1",
+    data: opt
+      },{
+    name:"Optimal Schedule ",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id1",
+    binWidth:1},
+    {
+    visible:false,
+    showInLegend:false,
+    id:"id2",
+    data: pmax
+      },{
+    name:"DC ",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id2",
+    binWidth:1}
+    ]
+});
+
+
+
+      });
+
+
+
+
+
+
+
+ }  else if(selectedPat=="PMINDUAL"){
+
+
+
+$.post('/gamsdual/getDualTrend',{selectedDate:dates,selectedGen:selectedGen},function(res){
+   
+var chartdata=JSON.parse(res);
+selectedGenerator=idtoname[selectedGen];
+if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+console.log(chartdata);
+
+
+//var sch=[];
+var opt=[];
+
+
+
+
+for(var i=1;i<chartdata.length;i++)
+{
+  //sch.push(chartdata[i][1]);
+  opt.push(chartdata[i][4]);
+}
+
+
+
+Highcharts.chart('chart_div', {
+
+   chart: {
+        type: 'histogram',
+        zoomType: 'xy'
+    },
+
+  title: {
+    text: 'PMINDUAL histogram from ' + dates[0] + ' to: ' + dates[dates.length-1] + ', Total TimeBlocks: ' + dates.length*96
+  },
+  xAxis: [{
+    title: { text: 'MW' },
+    alignTicks: false
+  }],
+
+  yAxis: [{
+    title: { text: 'Frequency' }
+  }],
+
+    series:[{
+    visible:false,
+    showInLegend:false,
+    id:"id0",
+    data: opt
+      },{
+    name:"PMINDUAL:",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id0",
+    binWidth:1},
+    ]
+});
+
+
+
+      });
+
+
+
+
+
+
+
+ }else if(selectedPat=="ACTUAL"){
+
+
+
+$.post('/gamsactual/getTodayDataDateActual',{selectedDate:dates,selectedGen:selectedGen},function(res){
+   
+var chartdata=JSON.parse(res);
+selectedGenerator=idtoname[selectedGen];
+if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+console.log(chartdata);
+
+
+//var sch=[];
+var opt=[];
+
+
+
+
+for(var i=1;i<chartdata.length;i++)
+{
+  //sch.push(chartdata[i][1]);
+  opt.push(chartdata[i][2]);
+}
+
+Highcharts.chart('chart_div', {
+
+   chart: {
+        type: 'histogram',
+        zoomType: 'xy'
+    },
+
+  title: {
+    text: 'ACTUAL METER READING histogram from ' + dates[0] + ' to: ' + dates[dates.length-1] + ', Total TimeBlocks: ' + dates.length*96
+  },
+  xAxis: [{
+    title: { text: 'Values' },
+    alignTicks: false
+  }],
+
+  yAxis: [{
+    title: { text: 'Frequency' }
+  }],
+
+    series:[{
+    visible:false,
+    showInLegend:false,
+    id:"id0",
+    data: opt
+      },{
+    name:"ACTUAL METER READING COUNT:",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id0",
+    binWidth:1},
+    ]
+});
+
+
+
+      });
+
+
+
+
+
+
+
+ }
+
+ else if(selectedPat=="pocloss"){
+
+
+
+
+
+$.post('/gamsdata/getTodayDataDateLoss',{selectedDate:dates,selectedGen:selectedGen},function(res){
+   selectedGenerator=idtoname[selectedGen];
+   if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+chartdata=JSON.parse(res);
+console.log(chartdata);
+var finaldata=[];
+
+var xaxis=[];
+var yaxis=[];
+
+
+for(var i=1;i<chartdata.length;i++){
+xaxis.push(((i-1)%96 + 1).toString());
+yaxis.push(parseInt((chartdata[i][2]-chartdata[i][1])));
+
+}
+
+Highcharts.chart('chart_div', {
+
+   chart: {
+        type: 'histogram',
+        zoomType: 'xy'
+    },
+
+  title: {
+    text: 'LOSS histogram from ' + dates[0] + ' to: ' + dates[dates.length-1] + ', Total TimeBlocks: ' + dates.length*96
+  },
+  xAxis: [{
+    title: { text: 'MW' },
+    alignTicks: false
+  }],
+
+  yAxis: [{
+    title: { text: 'Frequency' }
+  }],
+
+    series:[{
+    visible:false,
+    showInLegend:false,
+    id:"id0",
+    data: yaxis
+      },{
+    name:"LOSS:",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id0",
+    binWidth:1},
+    ]
+});
+
+
+});
+
+
+
+
+
+
+
+/*
+
+$.post('/gamsdata/getTodaySaving',{selectedDate:dates,selectedGen:selectedGen,flag:2},function(res){
+   
+var chartdata=JSON.parse(res);
+selectedGenerator=idtoname[selectedGen];
+
+//console.log(chartdata);
+if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+
+
+var ocost=[];
+var pcost=[];
+
+
+console.log(chartdata);
+
+var days=dates.length;
+
+for(var i=1;i<chartdata.length;i++)
+{
+  ocost.push(chartdata[i][1]);
+  pcost.push(chartdata[i][2]);
+}
+
+
+
+
+ocost.sort(function(a,b){return a-b});
+pcost.sort(function(a,b){return a-b});
+
+console.log("ocost printing");
+console.log(ocost);
+
+
+var countValues=[];
+var countValues2=[];
+
+
+
+
+for(var i=0;i<ocost.length;i++)
+{
+
+  if(ocost.indexOf(ocost[i]) == i)
+  {
+    countValues.push({ct:Number((((ocost.length-ocost.indexOf(ocost[i]))/ocost.length)*100).toFixed(2)),at:ocost[i]});
+  }
+  
+}
+
+
+for(var i=0;i<pcost.length;i++)
+{
+
+  if(pcost.indexOf(pcost[i]) == i)
+  {
+    countValues2.push({ct:Number((((pcost.length-pcost.indexOf(pcost[i]))/pcost.length)*100).toFixed(2)),at:pcost[i]});
+  }
+  
+}
+
+  
+
+
+countValues.sort(function(a, b){return a.ct - b.ct});
+countValues2.sort(function(a, b){return a.ct - b.ct});
+
+var finaldata=[];
+var finaldata2=[];
+
+for(var k=0;k<countValues.length;k++){
+  var temp=[];
+  temp.push(countValues[k]['ct']);
+  temp.push(countValues[k]['at']);
+  finaldata.push(temp);
+}
+
+
+for(var k=0;k<countValues2.length;k++){
+  var temp=[];
+  temp.push(countValues2[k]['ct']);
+  temp.push(countValues2[k]['at']);
+  finaldata2.push(temp);
+}
+console.log('countValues');
+console.log(countValues);
+console.log('countValues2');
+console.log(countValues2);
+
+
+
+
+
+
+
+
+
+
+Highcharts.chart('chart_div', {
+
+    chart: {
+        type: 'area'
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        },
+    title: {
+        text:'Pattern for  Optimal Cost and Present Cost for ' +selectedGenerator+' From Date '+selectedDate+' to Date '+tdate
+    },
+    xAxis: {
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    
+    credits: {
+        enabled: false
+    },
+    series: [ {
+        name: 'Optimal Cost',
+        data: finaldata,
+        color:'#FA8072'
+    },
+
+    {
+      name:'Present Cost',
+      data: finaldata2,
+    }]
+});
+
+
+
+   
+      });
+
+
+*/
+
+
+
+
+ }
+
+else if(selectedPat=="PERTURBATIONS"){
+
+    $.post('/gamspwc/getChanges',{date:dates},function(res){
+   
+chartdata=JSON.parse(res);
+
+console.log("printing chart data");
+
+console.log(chartdata);
+var xaxisData=[];
+var sch=[];
+var opt=[];
+var pmin=[];
+var pmax=[];
+
+for(var i=0;i<chartdata.length;i++){
+  xaxisData.push((i%96) +1);
+
+  sch.push(parseInt(chartdata[i][1]));
+
+   opt.push(parseInt(chartdata[i][2]));
+
+    pmax.push(parseInt(chartdata[i][3]));
+
+     pmin.push(parseInt(-1*chartdata[i][4]));
+}
+
+
+Highcharts.chart('chart_div', {
+
+   chart: {
+        type: 'histogram',
+        zoomType: 'xy'
+    },
+
+  title: {
+    text: 'SCED UP-DOWN COUNT histogram from ' + dates[0] + ' to: ' + dates[dates.length-1] + ', Total TimeBlocks: ' + dates.length*96
+  },
+  xAxis: [{
+    title: { text: 'COUNT' },
+    alignTicks: false
+  }],
+
+  yAxis: [{
+    title: { text: 'Frequency' }
+  }],
+
+    series:[{
+    visible:false,
+    showInLegend:false,
+    id:"id0",
+    data: sch
+      },{
+    name:"SCED UP COUNT:",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id0",
+    binWidth:1},
+    {
+    visible:false,
+    showInLegend:false,
+    id:"id1",
+    data: opt
+      },{
+    name:"SCED DOWN COUNT:",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id1",
+    binWidth:1},
+    ]
+});
+
+
+Highcharts.chart('chart_div1', {
+
+   chart: {
+        type: 'histogram',
+        zoomType: 'xy'
+    },
+
+  title: {
+    text: 'SCED UP-DOWN (in MW) histogram from ' + dates[0] + ' to: ' + dates[dates.length-1] + ', Total TimeBlocks: ' + dates.length*96
+  },
+  xAxis: [{
+    title: { text: 'MW' },
+    alignTicks: false
+  }],
+
+  yAxis: [{
+    title: { text: 'Frequency' }
+  }],
+
+    series:[{
+    visible:false,
+    showInLegend:false,
+    id:"id0",
+    data: pmax
+      },{
+    name:"SCED UP(in MW): ",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id0",
+    binWidth:1},{
+    visible:false,
+    showInLegend:false,
+    id:"id1",
+    data: pmin
+      },{
+    name:"SCED DOWN(in MW): ",
+    type:"histogram",
+    turboThreshold:100000,
+    baseSeries:"id1",
+    binWidth:1},
+    ]
+});
+
+
+
+
+
+
+
+
+
+
+
+      });
+
+
+
+ }
+
+
+
+
+}
+
+
+
+</script>
+<div class="row"><span class="alert alert-danger col-lg-12"><h5><center>Kindly Select Date Range Excluding Today Date</center></h5></span></div>
+<div class="row">
+
+               <div class="col-lg-2">
+    <label for="calender1">FROM DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+
+               <div class="col-lg-2">
+    <label for="calender2">TO DATE</label>
+     <input type="text" class="form-control"   id="calender2">
+</div>
+        <div class="col-lg-3">
+          <label>PATTERN TO PLOT</label>
+          <select id="dropdownpattern" class="form-control"></select>
+        </div>
+
+      <div class="col-lg-3">
+          <label>GENERATORS</label>
+          <select id="dropdowngen" class="form-control"></select>
+      </div>
+
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-outline-primary form-control" onclick="showPattern()" >submit</button>
+</div>
+</div>
+<div id="chart_div" style="width: 100%; height: 500px;"></div>
+<div id="chart_cumm" class="col-lg-8 offset-lg-2"></div>
+<div id="chart_div1" style="width: 100%; height: 500px;"></div>
+<div id="chart_div2" style="width: 100%; height: 500px;"></div> 
+<div id="chart_div3" style="width: 100%; height: 500px;"></div>

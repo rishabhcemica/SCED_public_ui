@@ -1,0 +1,313 @@
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+
+
+  <script src="https://kendo.cdn.telerik.com/2016.3.914/js/kendo.all.min.js"></script>
+ <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.22/pdfmake.min.js"></script>
+   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.39/vfs_fonts.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.7/pako.min.js"></script>
+<script>
+    // Import DejaVu Sans font for embedding
+
+    // NOTE: Only required if the Kendo UI stylesheets are loaded
+    // from a different origin, e.g. cdn.kendostatic.com
+    kendo.pdf.defineFont({
+      "DejaVu Sans": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans.ttf",
+      "DejaVu Sans|Bold": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Bold.ttf",
+      "DejaVu Sans|Bold|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+      "DejaVu Sans|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+      "WebComponentsIcons": "https://kendo.cdn.telerik.com/2017.1.223/styles/fonts/glyphs/WebComponentsIcons.ttf"
+    });
+  </script>
+
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+  <style type="text/css">
+    
+
+table.dataTable thead .sorting:after,
+table.dataTable thead .sorting:before,
+table.dataTable thead .sorting_asc:after,
+table.dataTable thead .sorting_asc:before,
+table.dataTable thead .sorting_asc_disabled:after,
+table.dataTable thead .sorting_asc_disabled:before,
+table.dataTable thead .sorting_desc:after,
+table.dataTable thead .sorting_desc:before,
+table.dataTable thead .sorting_desc_disabled:after,
+table.dataTable thead .sorting_desc_disabled:before {
+bottom: .5em;
+}
+
+td.highlight {
+    background-color: deepskyblue !important;
+}
+
+table th {
+    position: -webkit-sticky; 
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background:bisque;
+}
+
+
+
+  </style>
+
+
+
+
+
+
+    <script type="text/javascript">
+
+      var selectedDate='';
+      var chartdata;
+      var selectedGenerator;
+      var final;
+      var irbuffer;
+       var month_names =["Jan","Feb","Mar",
+                      "Apr","May","Jun",
+                      "Jul","Aug","Sep",
+                      "Oct","Nov","Dec"];
+
+
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+   $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+document.getElementById("calender2").value = today;
+
+});
+
+function showOpt(){
+
+  selectedDate=document.getElementById("calender1").value;
+  tdate=document.getElementById("calender2").value;
+ // var selectedGen=$("#dropdowngen").val();
+ // var selectedPat=$('#dropdownpattern').val();
+
+
+  var from=$( "#calender1" ).datepicker('getDate');
+  var dates=[];
+  var i=1;
+  dates.push(selectedDate);
+  if(selectedDate!=tdate)
+{  
+
+  do{   
+
+  var x=from;
+   x.setDate(x.getDate()+i);
+   var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=tdate);
+
+}
+
+
+var today = new Date();
+var dd = String(today.getDate()).padStart(2, '0');
+var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+var yyyy = today.getFullYear();
+var numOfBlocks=0;
+todaystr =  dd + '-' + mm + '-' + yyyy;
+if(todaystr==tdate)
+{
+  console.log('today is also included');
+  numOfBlocks=(dates.length-1)*96;
+  numOfBlocks += today.getHours()*4; // => 9
+  numOfBlocks += parseInt(today.getMinutes()/15); // =>  30
+}
+else
+{
+  numOfBlocks=dates.length * 96;
+}
+
+
+$.post('/account/getRates',{date:dates},function(res){
+
+  var vcdata=JSON.parse(res);
+  //console.log(vcdata);
+
+
+
+
+$.post('/gamsbuffer/getOverallBuffer',{dates:dates},function(res){
+
+
+
+
+
+var bufferdeatils=JSON.parse(res);
+
+var htm='';
+
+
+var vc={};
+var dlen=0;
+for (key in bufferdeatils)
+ {
+
+vc[key]=0;
+var sum=0;
+ for(var d=0;d<dates.length;d++){
+var dd=dates[d].split("-")[0]+"-"+month_names[parseInt(dates[d].split("-")[1])-1]+"-"+dates[d].split("-")[2];
+
+if(typeof(vcdata[dd][key])!="undefined"){
+sum+=parseFloat(vcdata[dd][key]);
+dlen+=1;
+}
+else{
+  sum+=0;
+}
+
+
+
+ }
+vc[key]=parseInt(sum/dlen);
+dlen=0;
+
+ }
+
+var totalupcount=0;
+var totaldncount=0;
+var totalup=0;
+var totaldn=0;
+
+
+
+htm+='<table id="dtBasicExample" class="row-border hover order-column table-sm" cellspacing="0" ><thead><tr><th colspan="6"><h2><center>INFEASIBILITY Count and Values From '+selectedDate+' to  '+tdate+ '<br>( Total Time Blocks: ' + numOfBlocks +') </center></h2></th></tr><tr><th>GENERATOR</th><th>VARIABLE COST(Avg.)</th><th>RAMP UP COUNT</th><th>RAMP DOWN COUNT</th><th>RAMP UP AVG(MW/COUNT)</th><th>RAMP DOWN AVG(MW/COUNT)</th></tr></thead><tbody>';
+
+for(key in bufferdeatils){
+
+var tempUpAvg;
+var tempDownAvg;
+
+  if(isNaN(bufferdeatils[key]['rup']/bufferdeatils[key]['rupcount']))
+    tempUpAvg=0;
+
+  else
+    tempUpAvg=parseInt(bufferdeatils[key]['rup']/bufferdeatils[key]['rupcount']);
+
+
+  if(isNaN(bufferdeatils[key]['rdn']/bufferdeatils[key]['rdowncount']))
+    tempDownAvg=0;
+
+  else
+    tempDownAvg=parseInt(bufferdeatils[key]['rdn']/bufferdeatils[key]['rdowncount']);
+
+
+
+
+htm+='<tr><td><h3>'+idtoname[key]+'</h3></td><td><h3>'+vc[key]+'</h3></td><td><h3>'+bufferdeatils[key]['rupcount']+'</h3></td><td><h3>'+bufferdeatils[key]['rdowncount']+'</h3></td><td><h3>'+tempUpAvg+'</h3></td><td><h3>'+tempDownAvg+'</h3></td></tr>';
+
+totalupcount+=parseInt(bufferdeatils[key]['rupcount']);
+totaldncount+=parseInt(bufferdeatils[key]['rdowncount']);
+totalup+= bufferdeatils[key]['rup']
+totaldn+= bufferdeatils[key]['rdn']
+
+
+}
+
+htm+='</tbody><tfoot>';
+htm+='<tr><td colspan="2"><h3>Total</h3></td><td><h3>'+totalupcount.toString()+'</h3></td><td><h3>'+totaldncount.toString()+'</h3></td><td><h3>'+(totalup/totalupcount).toFixed(1)+'</h3></td><td><h3>'+(totaldn/totaldncount).toFixed(1)+'</h3></td></tr></tfoot>';
+htm+='</table>';
+
+document.getElementById('buffert').innerHTML=htm;
+
+
+
+
+ var table=$('#dtBasicExample').DataTable({"iDisplayLength": 51});
+$('.dataTables_length').addClass('bs-select');
+
+$('#dtBasicExample tbody')
+        .on( 'dbclick', 'td', function () {
+            var colIdx = table.cell(this).index().column;
+ 
+            $( table.cells().nodes() ).removeClass( 'highlight' );
+            $( table.column( colIdx ).nodes() ).addClass( 'highlight' );
+        } );
+
+
+
+
+
+});
+
+
+
+});
+
+}
+
+
+
+    </script>
+
+
+      <div class="row">
+               <div class="col-lg-2">
+    <label for="calender1">FROM DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+               <div class="col-lg-2">
+    <label for="calender1">TO DATE</label>
+     <input type="text" class="form-control"   id="calender2">
+</div>
+
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-outline-primary form-control" onclick="showOpt()" >submit</button>
+</div>
+
+
+<div class="col-lg-3">
+<input type="button"  class="  btn btn-success" style="width:100%;margin-top:25px;" id="btnExport" value="Export As PDF" onclick="generatePDF('#dtBasicExample')" />
+</div>
+
+</div>
+<div id="buffert" class="col-lg-8 offset-lg-2" ></div>
+
+<script type="text/javascript">
+  
+      var generatePDF = function(selector) {
+  // kendo.drawing.drawDOM($("#dsm")).then(function(group) {
+  //   kendo.drawing.pdf.saveAs(group, "Converted PDF.pdf");
+  // });
+  //$('#milage').removeClass('table-responsive');
+
+    kendo.drawing.drawDOM($(selector)).then(function (group) {
+        kendo.drawing.pdf.saveAs(group, "Infeasibility.pdf");
+      });
+
+    //$('#dtBasicExample').addClass('table-responsive');
+}
+</script>

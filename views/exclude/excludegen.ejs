@@ -1,0 +1,179 @@
+<script type="text/javascript">
+var gdata;
+ var curr_date=new Date();
+         curr_date.setHours(curr_date.getHours()+5);
+        curr_date.setMinutes(curr_date.getMinutes()+30);
+       curr_date= curr_date.toISOString().slice(0,10);
+var curr_date1=new Date();
+        var hh=curr_date1.getHours();
+        var mm=curr_date1.getMinutes();
+     curr_date=curr_date.split("-").reverse().join("-");
+     var curr_block=Math.ceil(hh*4)+Math.ceil(mm/15.0);
+     var predictedBlock=curr_block+2;
+     if(curr_block==95){
+      predictedBlock=1;
+
+     }
+     if(curr_block==96){
+      predictedBlock=2;
+     }
+      var selectedDate=curr_date;
+
+$.get('/excludedgen/getexcludedgen',function(res){
+var ex=JSON.parse(res);
+var ll=ex.length;
+$.post('/GenRates/getCurtailment',{date:selectedDate},function(res){
+  var rldcex=JSON.parse(res);
+  //console.log(rldcex);
+var rldc=[];
+var nldc=[];
+for (var key in rldcex) {
+    if (rldcex.hasOwnProperty(key)) {
+         if(parseInt(rldcex[key]['CUR'].split(",")[predictedBlock-1])==1){
+rldc.push(key);
+         }
+    }
+}
+for(var u=0;u<ex.length;u++){
+nldc.push(ex[u]);
+}
+
+var htm4='';
+var htmNLDC='';
+var htmRLDC='';
+console.log(ll);
+if(ll==47){
+htm4+='<div class="alert alert-danger" role="alert"><h4>Application Stopped</h4></div>';
+}else{
+htm4+='<div class="alert alert-success" role="alert"><h4>Application Running</h4></div>';
+}
+htmNLDC+="<div class='alert alert-danger'><h3>NLDC Excluded Generators</h3></div><div><h4>";
+for(var u=0;u<nldc.length;u++){
+	if(typeof(idtoname[nldc[u]])!="undefined")
+  htmNLDC+="<li>"+idtoname[nldc[u]]+"</li> ";
+}
+htmNLDC+="</h4></div>";
+
+htmRLDC+="<div class='alert alert-danger'><h3>RLDC Excluded Generators</h3></div><div>";
+for(var u=0;u<rldc.length;u++){
+  htmRLDC+="<li>"+idtoname[rldc[u]]+"</li>";
+}
+htmRLDC+="</div>";
+
+document.getElementById('nldc').innerHTML=htmNLDC;
+document.getElementById('rldc').innerHTML=htmRLDC;
+
+});
+});
+
+	$.post('/gen/getAllGens',function(res){
+      var data=JSON.parse(res);
+     console.log(data);
+      gdata=data;
+var htm='';
+$.get('/excludedgen/getexcludedgen',function(res){
+          
+var nr='<div><h3>NR</h3></div>';
+var er='<div><h3>ER</h3></div>';
+var ner='<div><h3>NER</h3></div>';
+var sr='<div><h3>SR</h3></div>';
+var wr='<div><h3>WR</h3></div>';
+var showExcluded=JSON.parse(res);
+console.log(showExcluded);
+
+
+  for(var i=0;i<data.length;i++)
+     {  
+
+
+     	// htm+='<label><input type="checkbox" class="form-control" id="'+data[i]['id']+'"" name="'+data[i]['id']+'" value="'+data[i]['id']+'">'+data[i]['name']+'</label><br>';
+if(data[i]['id'][0]=='1'){
+	if(showExcluded.indexOf(data[i]['id'])>-1)
+{	er+='<div class="form-check"><input class="form-check-input" name="genn" type="checkbox" checked="checked" value="'+data[i]['id']+'" id="'+data[i]['id']+'"><label class="form-check-label" for="'+data[i]['id']+'">'+data[i]['name']+'</label></div>';}
+else{
+	er+='<div class="form-check"><input class="form-check-input" name="genn" type="checkbox" value="'+data[i]['id']+'" id="'+data[i]['id']+'"><label class="form-check-label" for="'+data[i]['id']+'">'+data[i]['name']+'</label></div>';
+}
+
+}
+if(data[i]['id'][0]=='2'){
+		if(showExcluded.indexOf(data[i]['id'])>-1)
+{
+	ner+='<div class="form-check"><input class="form-check-input" name="genn" type="checkbox" checked="checked" value="'+data[i]['id']+'" id="'+data[i]['id']+'"><label class="form-check-label" for="'+data[i]['id']+'">'+data[i]['name']+'</label></div>';}
+	else{
+		ner+='<div class="form-check"><input class="form-check-input" name="genn" type="checkbox" value="'+data[i]['id']+'" id="'+data[i]['id']+'"><label class="form-check-label" for="'+data[i]['id']+'">'+data[i]['name']+'</label></div>';
+
+	}
+}
+if(data[i]['id'][0]=='3'){
+			if(showExcluded.indexOf(data[i]['id'])>-1)
+{
+	nr+='<div class="form-check"><input class="form-check-input" name="genn" type="checkbox" checked="checked" value="'+data[i]['id']+'" id="'+data[i]['id']+'"><label class="form-check-label" for="'+data[i]['id']+'">'+data[i]['name']+'</label></div>';}
+	else{
+	nr+='<div class="form-check"><input class="form-check-input" name="genn" type="checkbox" value="'+data[i]['id']+'" id="'+data[i]['id']+'"><label class="form-check-label" for="'+data[i]['id']+'">'+data[i]['name']+'</label></div>';
+
+	}
+}
+if(data[i]['id'][0]=='5'){
+				if(showExcluded.indexOf(data[i]['id'])>-1)
+{
+	wr+='<div class="form-check"><input class="form-check-input" name="genn" type="checkbox" checked="checked" value="'+data[i]['id']+'" id="'+data[i]['id']+'"><label class="form-check-label" for="'+data[i]['id']+'">'+data[i]['name']+'</label></div>';}
+	else{
+wr+='<div class="form-check"><input class="form-check-input" name="genn" type="checkbox" value="'+data[i]['id']+'" id="'+data[i]['id']+'"><label class="form-check-label" for="'+data[i]['id']+'">'+data[i]['name']+'</label></div>';
+
+	}
+}
+if(data[i]['id'][0]=='4'){
+					if(showExcluded.indexOf(data[i]['id'])>-1)
+{
+	sr+='<div class="form-check"><input class="form-check-input" name="genn" type="checkbox" checked="checked" value="'+data[i]['id']+'" id="'+data[i]['id']+'"><label class="form-check-label" for="'+data[i]['id']+'">'+data[i]['name']+'</label></div>';}
+	else{
+
+		sr+='<div class="form-check"><input class="form-check-input" name="genn" type="checkbox" value="'+data[i]['id']+'" id="'+data[i]['id']+'"><label class="form-check-label" for="'+data[i]['id']+'">'+data[i]['name']+'</label></div>';
+	}
+}
+     	
+
+}
+
+document.getElementById('gensnr').innerHTML=nr;
+document.getElementById('genser').innerHTML=er;
+document.getElementById('gensar').innerHTML=ner;
+document.getElementById('genssr').innerHTML=sr;
+document.getElementById('genswr').innerHTML=wr;
+
+	});
+});
+
+	function save(){
+		var selected=[];
+		$("input[name='genn']:checked").each(function(){
+    selected.push($(this).val());
+});
+		console.log(selected);
+		$.post('/exludedgen/putExcludedGen',{selectedgen:selected},function(res){
+
+		});
+	}
+</script>
+<div class="form-group">
+	
+<div class="row">
+<div id="gensnr" class="col-lg-2 "></div>
+<div id="genser" class="col-lg-2 "></div>
+<div id="gensar" class="col-lg-2 "></div>
+<div id="genssr" class="col-lg-3 "></div>
+<div id="genswr" class="col-lg-3 "></div>
+</div>
+
+<button type="button" class="btn btn-primary" onclick="save()">Save</button>
+
+<div class="row">
+<div class="col-lg-6 alert alert-success" id="rldc">
+
+</div>
+<div class="col-lg-6 alert alert-success" id="nldc">
+
+</div>
+  </div>
+
+</div>

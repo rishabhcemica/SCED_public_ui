@@ -1,0 +1,435 @@
+     
+     <script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+
+    <script src="https://kendo.cdn.telerik.com/2016.3.914/js/kendo.all.min.js"></script>
+ <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.22/pdfmake.min.js"></script>
+   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.39/vfs_fonts.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.7/pako.min.js"></script>
+<script>
+    // Import DejaVu Sans font for embedding
+
+    // NOTE: Only required if the Kendo UI stylesheets are loaded
+    // from a different origin, e.g. cdn.kendostatic.com
+    kendo.pdf.defineFont({
+      "DejaVu Sans": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans.ttf",
+      "DejaVu Sans|Bold": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Bold.ttf",
+      "DejaVu Sans|Bold|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+      "DejaVu Sans|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+      "WebComponentsIcons": "https://kendo.cdn.telerik.com/2017.1.223/styles/fonts/glyphs/WebComponentsIcons.ttf"
+    });
+  </script>
+
+
+
+
+<script type="text/javascript">
+
+
+      var selectedDate='';
+      var chartdata;
+      var selectedGenerator;
+      var final;
+
+       var curr_date=new Date();
+         curr_date.setHours(curr_date.getHours()+5);
+        curr_date.setMinutes(curr_date.getMinutes()+30);
+       curr_date= curr_date.toISOString().slice(0,10);
+var curr_date1=new Date();
+        var hh=curr_date1.getHours();
+        var mm=curr_date1.getMinutes();
+     curr_date=curr_date.split("-").reverse().join("-");
+     var curr_block=Math.ceil(hh*4)+Math.ceil(mm/15.0);
+     var predictedBlock=curr_block+2;
+     if(curr_block==95){
+      predictedBlock=1;
+
+     }
+     if(curr_block==96){
+      predictedBlock=2;
+     }
+
+
+
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+    $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+document.getElementById("calender2").value = today;
+
+});
+
+
+
+  
+function showData(){
+
+
+var fromDate=document.getElementById("calender1").value;
+var toDate=document.getElementById("calender2").value
+ var from=$( "#calender1" ).datepicker('getDate');
+  var dates=[];
+  var i=1;
+  dates.push(fromDate);
+  if(fromDate!=toDate)
+{  
+
+  do{   
+
+  var x=from;
+   x.setDate(x.getDate()+i);
+   var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=toDate);
+
+}
+
+console.log(dates);
+
+
+
+
+
+
+
+
+
+
+
+var selectedDate=document.getElementById("calender1").value;
+    $.post('/gamsdata/getTodayDataDate',{selectedDate:dates,selectedGen:"NR"},function(res){
+                          var alertNR=JSON.parse(res);
+
+  $.post('/gamsdata/getTodayDataDate',{selectedDate:dates,selectedGen:"WR"},function(res){
+    var alertWR=JSON.parse(res);
+
+  $.post('/gamsdata/getTodayDataDate',{selectedDate:dates,selectedGen:"SR"},function(res){
+
+    var alertSR=JSON.parse(res);
+
+  $.post('/gamsdata/getTodayDataDate',{selectedDate:dates,selectedGen:"ER"},function(res){
+    var alertER=JSON.parse(res);
+
+  $.post('/gamsdata/getTodayDataDate',{selectedDate:dates,selectedGen:"AR"},function(res){
+
+var alertAR=JSON.parse(res);
+
+var block=96;
+console.log(alertSR);
+if(selectedDate==curr_date){
+  block=curr_block;
+}
+
+var summaryTable={};
+var nrup=0;
+var nrdn=0;
+var srup=0;
+var srdn=0;
+var wrup=0;
+var wrdn=0;
+var erup=0;
+var erdn=0;
+var arup=0;
+var ardn=0;
+
+for(var i=0;i<alertNR.length - 1;i++){
+
+if(parseInt(alertNR[i+1][2]-alertNR[i+1][1])>=0){
+
+  nrup+=parseInt(alertNR[i+1][2]-alertNR[i+1][1]);
+
+}else{
+
+nrdn+=parseInt(alertNR[i+1][1]-alertNR[i+1][2]);
+}
+
+if(parseInt(alertWR[i+1][2]-alertWR[i+1][1])>=0){
+
+  wrup+=parseInt(alertWR[i+1][2]-alertWR[i+1][1]);
+
+}else{
+
+wrdn+=parseInt(alertWR[i+1][1]-alertWR[i+1][2]);
+}
+
+
+if(parseInt(alertER[i+1][2]-alertER[i+1][1])>=0){
+
+  erup+=parseInt(alertER[i+1][2]-alertER[i+1][1]);
+
+}else{
+
+erdn+=parseInt(alertER[i+1][1]-alertER[i+1][2]);
+}
+
+
+if(parseInt(alertSR[i+1][2]-alertSR[i+1][1])>=0){
+
+  srup+=parseInt(alertSR[i+1][2]-alertSR[i+1][1]);
+
+}else{
+
+srdn+=parseInt(alertSR[i+1][1]-alertSR[i+1][2]);
+}
+
+
+if(parseInt(alertAR[i+1][2]-alertAR[i+1][1])>=0){
+
+  arup+=parseInt(alertAR[i+1][2]-alertAR[i+1][1]);
+
+}else{
+
+ardn+=parseInt(alertAR[i+1][1]-alertAR[i+1][2]);
+}
+
+
+
+
+
+
+}
+
+var htm1='';
+htm1+='<table class="table table-bordered"><thead><tr><th><h3>Region</h3></th><th><h3>SCED UP(MWhr)</h3></th><th><h3>SCED DOWN(MWhr)</h3></th></tr></thead><tbody>';
+
+htm1+='<tr><td><h3>NR</h3></td><td><h3>'+parseInt(nrup/4).toString()+'</h3></td><td><h3>'+parseInt(nrdn/4).toString()+'</h3></td></tr>';
+htm1+='<tr><td><h3>WR</h3></td><td><h3>'+parseInt(wrup/4).toString()+'</h3></td><td><h3>'+parseInt(wrdn/4).toString()+'</h3></td></tr>';
+htm1+='<tr><td><h3>ER</h3></td><td><h3>'+parseInt(erup/4).toString()+'</h3></td><td><h3>'+parseInt(erdn/4).toString()+'</h3></td></tr>';
+htm1+='<tr><td><h3>SR</h3></td><td><h3>'+parseInt(srup/4).toString()+'</h3></td><td><h3>'+parseInt(srdn/4).toString()+'</h3></td></tr>';
+htm1+='<tr><td><h3>AR</h3></td><td><h3>'+parseInt(arup/4).toString()+'</h3></td><td><h3>'+parseInt(ardn/4).toString()+'</h3></td></tr>';
+htm1+='<tr><td><h3>TOTAL</h3></td><td><h3>'+parseInt((nrup+srup+wrup+erup+arup)/4).toString()+'</h3></td><td><h3>'+parseInt((nrdn+srdn+erdn+wrdn+ardn)/4).toString()+'</h3></td></tr>';
+document.getElementById('chart_div').innerHTML=htm1;
+
+});
+
+});
+
+
+});
+
+
+});
+
+});
+
+
+   $.post('/gamsdata/getTodayDataDate',{selectedDate:dates,selectedGen:"ALL"},function(res){
+                          var chartdata=JSON.parse(res);
+
+
+console.log('chartdata');
+console.log(chartdata);
+
+
+
+var xaxisData=[];
+var sch=[];
+var opt=[];
+var pmin=[];
+var pmax=[];
+var upReserve=[];
+var downReserve=[];
+var diffoptimal=[];
+var reserveup=[];
+var reservedn=[];
+diffoptimal.push(0);
+
+for(var i=0;i<chartdata.length-1;i++){
+  xaxisData.push(chartdata[i+1][0]);
+  sch.push(parseInt(chartdata[i+1][1]));
+   opt.push(parseInt(chartdata[i+1][2]));
+    pmax.push(parseInt(chartdata[i+1][3]));
+     pmin.push(parseInt(chartdata[i+1][4]));
+     upReserve.push(parseInt(chartdata[i+1][5]));
+     downReserve.push((-1)*parseInt(chartdata[i+1][6]));
+
+     reserveup.push(parseInt(chartdata[i+1][3])-parseInt(chartdata[i+1][2]));
+     reservedn.push(parseInt(chartdata[i+1][4])-parseInt(chartdata[i+1][2]));
+     //diffoptimal.push(parseInt(chartdata[i+2][2])-parseInt(chartdata[i+1][2]));
+}
+
+for(var i=1;i<chartdata.length-1;i++){
+
+diffoptimal.push(parseInt(chartdata[i+1][1])-parseInt(chartdata[i][1]));
+
+}
+
+
+
+
+Highcharts.chart('chart_div1', {
+
+    chart: {
+        type: 'area',
+        zoomType: 'xy',
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        },
+    title: {
+        text:'Available Reserve For ALL FROM Date '+ fromDate + ' To date ' + toDate 
+    },
+    xAxis: {
+        categories: xaxisData,
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    
+    credits: {
+        enabled: false
+    },
+    series: [ {
+        name: 'Up Reserve',
+        data: reserveup,
+        color:' #ADD8E6'
+    }, {
+        name: 'Down Reserve',
+        data: reservedn,
+        color:'#FA8072'
+    }]
+});
+
+
+
+
+
+Highcharts.chart('chart_div2', {
+
+    chart: {
+        type: 'area',
+        zoomType: 'xy',
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        }, yAxis: {
+       
+        title: {
+
+            text: 'MW'
+        }
+    },
+    title: {
+        text:'Reserve FROM Date '+ fromDate + ' To date ' + toDate 
+    },
+    xAxis: {
+        categories: xaxisData,
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    
+    credits: {
+        enabled: false
+    },
+    series: [  {
+        name: 'DOWN Reserve',
+        data:downReserve,
+        color:' #ADD8E6'
+    },{
+        name: 'UP Reserve',
+        data: upReserve,
+        color:' rgba(230,230,0, .1)'
+    },
+    {
+        name: 'Ramping in Schedule',
+        data:diffoptimal,
+        color:'rgba(0,100,0, .1)'
+    }]
+});
+
+
+
+
+
+
+
+
+
+                        });
+
+
+
+}
+</script>
+
+
+
+
+      <div class="row">
+               <div class="col-lg-2">
+    <label for="calender1">FROM DATE:</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+
+<div class="col-lg-2" >
+    <label for="calender2">To DATE:</label>
+    <input type="text" class="form-control"   id="calender2">
+</div>
+
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-outline-primary form-control" onclick="showData()" >submit</button>
+</div>
+
+</div>
+<input type="button"  class="col-lg-2 offset-lg-5 btn btn-primary" id="btnExport" value="Export As PDF" onclick="generatePDF('.pdf-page')" />
+<div id="chart_div" style="height:50%;" class="pdf-page size-a5 col-lg-6 offset-lg-3"></div>
+<div id="chart_div1" style="width: 100%; height: 500px;"></div>
+<div id="chart_div2" style="width: 100%; height: 500px;"></div>
+
+
+<script type="text/javascript">
+  
+      var generatePDF = function(selector) {
+  // kendo.drawing.drawDOM($("#dsm")).then(function(group) {
+  //   kendo.drawing.pdf.saveAs(group, "Converted PDF.pdf");
+  // });
+  //$('#milage').removeClass('table-responsive');
+
+    kendo.drawing.drawDOM($(selector)).then(function (group) {
+        kendo.drawing.pdf.saveAs(group, "Report.pdf");
+      });
+
+    $('#milage').addClass('table-responsive');
+}
+</script>

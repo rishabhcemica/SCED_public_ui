@@ -1,0 +1,343 @@
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+      <script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script type="text/javascript">
+
+      var selectedDate='';
+      var tdate='';
+      var chartdata;
+      var selectedGenerator;
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+    $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+   // $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+document.getElementById("calender2").value = today;
+$.post('/gen/getAllGens',function(res){
+var gens=JSON.parse(res);
+console.log(gens);
+  htm='';
+htm+='<option value="ALL">ALL</option>';
+htm+='<option value="AR">NER</option>';
+htm+='<option value="SR">SR</option>';
+htm+='<option value="WR">WR</option>';
+htm+='<option value="ER">ER</option>';
+htm+='<option value="NR">NR</option>';
+for(var i=0;i<gens.length;i++){
+htm+='<option value="'+gens[i]['id']+'">'+gens[i]['name']+'</option>';}
+document.getElementById('dropdown').innerHTML=htm;
+});
+
+});
+
+function showOpt(){
+
+  selectedDate=document.getElementById("calender1").value;
+  var toDate=document.getElementById("calender2").value;
+  tdate=toDate;
+
+  if(selectedDate==toDate)
+{
+  var selectedGen=$("#dropdown").val();
+$.post('/gamsactual/getTodayDataActual',{selectedDate:selectedDate,selectedGen:selectedGen},function(res){
+   
+chartdata=JSON.parse(res);
+console.log(chartdata);
+selectedGenerator=idtoname[selectedGen];
+if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+console.log(chartdata);
+var xaxisData=[];
+var sch=[];
+var opt=[];
+var pmin=[];
+var pmax=[];
+var deviation=[];
+for(var i=0;i<chartdata.length-1;i++){
+  xaxisData.push(i+1);
+  sch.push(parseInt(chartdata[i+1][1]));
+   opt.push(parseInt(chartdata[i+1][2]));
+   deviation.push(parseInt(chartdata[i+1][1])-parseInt(chartdata[i+1][2]));
+   
+}
+
+Highcharts.chart('chart_div', {
+
+    chart: {
+        type: 'area',
+        zoomType: 'xy'
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        },
+    title: {
+        text:' Optimal Schedule and Actual Meter reading for ' +selectedGenerator+' From Date '+selectedDate + ' to Date '+tdate
+    },
+    xAxis: {
+        categories: xaxisData,
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    
+    credits: {
+        enabled: false
+    },
+    series: [{
+        name: 'Optimal Schedule',
+        data: sch,
+        color:'#FA8072'
+    }, {
+        name: 'Actual Meter Reading',
+        data: opt,
+        color:' #ADD8E6'
+    }]
+});
+
+
+
+
+
+
+
+Highcharts.chart('chart_div1', {
+
+    chart: {
+        type: 'area',
+        zoomType: 'xy'
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        },
+    title: {
+        text:' Deviation = Optimal-Actual Meter Reading  for ' +selectedGenerator+' From Date '+selectedDate + ' to Date '+tdate
+    },
+    xAxis: {
+        categories: xaxisData,
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    
+    credits: {
+        enabled: false
+    },
+    series: [{
+        name: 'Deviation',
+        data: deviation,
+        color:'#FA8072'
+    }]
+});
+
+
+
+
+
+ // google.charts.load('current', {'packages':['corechart']});
+ //      google.charts.setOnLoadCallback(drawChart);
+
+      //document.getElementById('chart_cumm').innerHTML="<h3>Cummulative of the above trend is :"+cumm.toString()+" MW </h3>";
+      });
+
+}else{
+
+  var from=$( "#calender1" ).datepicker('getDate');
+  var dates=[];
+  var i=1;
+  dates.push(selectedDate);
+  do{   
+
+  var x=from;
+   x.setDate(x.getDate()+i);
+   var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=toDate);
+
+console.log(dates);
+
+
+
+  var selectedGen=$("#dropdown").val();
+$.post('/gamsactual/getTodayDataDateActual',{selectedDate:dates,selectedGen:selectedGen},function(res){
+   
+chartdata=JSON.parse(res);
+selectedGenerator=idtoname[selectedGen];
+if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+console.log(chartdata);
+
+var xaxis=[];
+var optimal=[];
+var actual=[];
+var deviation=[];
+
+
+for(var i=1;i<chartdata.length;i++){
+xaxis.push(chartdata[i][0]);
+optimal.push(chartdata[i][1]);
+actual.push(chartdata[i][2]);
+
+deviation.push(chartdata[i][1]-chartdata[i][2]);
+
+}
+
+
+
+Highcharts.chart('chart_div', {
+
+    chart: {
+        type: 'area',
+        zoomType: 'xy'
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        },
+    title: {
+        text:' Optimal Schedule and Actual Meter reading for ' +selectedGenerator+' From Date '+selectedDate + ' to Date '+tdate
+    },
+    xAxis: {
+        categories: xaxis,
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    
+    credits: {
+        enabled: false
+    },
+    series: [{
+        name: 'Optimal Schedule',
+        data: optimal,
+        color:'#FA8072'
+    }, {
+        name: 'Actual Meter Reading',
+        data: actual,
+        color:' #ADD8E6'
+    }]
+});
+
+
+Highcharts.chart('chart_div1', {
+
+    chart: {
+        type: 'area',
+        zoomType: 'xy'
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        },
+    title: {
+        text:' Deviation = Optimal-Actual Meter Reading  for ' +selectedGenerator+' From Date '+selectedDate + ' to Date '+tdate
+    },
+    xAxis: {
+        categories: xaxis,
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    
+    credits: {
+        enabled: false
+    },
+    series: [{
+        name: 'Deviation',
+        data: deviation,
+        color:'#FA8072'
+    }]
+});
+
+
+
+
+
+ // google.charts.load('current', {'packages':['corechart']});
+ //      google.charts.setOnLoadCallback(drawChart);
+
+      //document.getElementById('chart_cumm').innerHTML="<h3>Cummulative of the above trend is :"+cumm.toString()+" MW </h3>";
+      });
+
+}
+
+}
+
+
+
+    </script>
+
+
+      <div class="row">
+
+               <div class="col-lg-3">
+    <label for="calender1">FROM DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+
+               <div class="col-lg-3">
+    <label for="calender2">TO DATE</label>
+     <input type="text" class="form-control"   id="calender2">
+</div>
+        <div class="col-lg-4">
+          <label>Generators</label>
+          <select id="dropdown" class="form-control">
+</select>
+      </div>
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-outline-primary form-control" onclick="showOpt()" >submit</button>
+</div>
+</div>
+<div id="chart_div" style="width: 100%; height: 500px;"></div>
+<div id="chart_div1" style="width: 100%; height: 500px;"></div>
+
+<!-- <div id="chart_cumm" style="width: 100%; height: 500px;" class="col-lg-4 offset-lg-4"></div> -->

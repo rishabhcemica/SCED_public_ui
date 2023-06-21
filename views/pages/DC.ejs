@@ -1,0 +1,249 @@
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+      <script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script type="text/javascript">
+
+      var selectedDate='';
+      var tdate='';
+      var chartdata;
+      var selectedGenerator;
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+    $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+   // $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+document.getElementById("calender2").value = today;
+
+
+
+NR_Gen= ['DADRI-I_OFFDAR_DC','Dadri-II_OFFDAR_DC','Jhajjar_OFFDAR_DC','Rihand1_OFFDAR_DC','Rihand2_OFFDAR_DC','Rihand3_OFFDAR_DC','Singrauli_OFFDAR_DC','Unchahar1_OFFDAR_DC','Unchahar2_OFFDAR_DC','Unchahar3_OFFDAR_DC','Unchahar4_OFFDAR_DC'];
+
+WR_Gen=[
+'CGPL_OFFBAR_DC','GADARWARA-I_OFFBAR_DC','GANDHAR-APM_OFFBAR_DC','GANDHAR-NAPM_OFFBAR_DC','GANDHAR-RLNG_OFFBAR_DC','KAWAS-APM_OFFBAR_DC','KAWAS-NAPM_OFFBAR_DC','KAWAS-RLNG_OFFBAR_DC'
+,'KAWAS-zLIQ_OFFBAR_DC','KSTPS7_OFFBAR_DC','KSTPS-I&II_OFFBAR_DC','LARA-I_OFFBAR_DC','MOUDA_OFFBAR_DC','MOUDA-II_OFFBAR_DC','NSPCL_OFFBAR_DC','RGPPL-GAS_OFFBAR_DC','RGPPL-RLNG_OFFBAR_DC','RGPPL-EBID_OFFBAR_DC','RGPPL-IR_OFFBAR_DC'
+,'RGPPL-MSEB_OFFBAR_DC','RGPPL-OTHERS_OFFBAR_DC','SASAN_OFFBAR_DC','SIPAT-I_OFFBAR_DC','SIPAT-II_OFFBAR_DC','SOLAPUR_OFFBAR_DC','VSTPS-I_OFFBAR_DC','VSTPS-II_OFFBAR_DC','VSTPS-III_OFFBAR_DC','VSTPS-IV_OFFBAR_DC','VSTPS-V_OFFBAR_DC'
+];
+
+SR_Gen=['Kudgi_OFFBAR_DC','NLCEXP_OFFBAR_DC','NLCIIST1_OFFBAR_DC','NLCIIST2_OFFDAR_DC','NLCTS2EXP_OFFBAR_DC','NTPL_OFFBAR_DC','RSTPSU1TO6_OFFBAR_DC','RSTPSU7_OFFBAR_DC','SIMHST1_OFFBAR_DC','SIMHST2_OFFBAR_DC','TALST2_OFFBAR_DC','VALLURNTECL_OFFBAR_DC' ];
+
+htm='';
+
+for(let i=0;i<(NR_Gen.length);i++)
+{
+  htm+='<option value="' + NR_Gen[i].split('_')[0]+ '">' + NR_Gen[i].split('_')[0]+'</option>';
+}
+for(let i=0;i<WR_Gen.length;i++)
+{
+  htm+='<option value="' + WR_Gen[i].split('_')[0]+ '">' + WR_Gen[i].split('_')[0]+'</option>';
+}
+
+for(let i=0;i<SR_Gen.length;i++)
+{
+  htm+='<option value="' + SR_Gen[i].split('_')[0]+ '">' + SR_Gen[i].split('_')[0]+'</option>';
+}
+
+document.getElementById('dropdown').innerHTML=htm;
+
+
+});
+
+
+
+
+
+
+
+function showOpt(){
+  let startdate=document.getElementById("calender1").value;
+  let enddate=document.getElementById("calender2").value;
+  
+  let gen_name=document.getElementById('dropdown').value;
+
+
+  selectedDate=document.getElementById("calender1").value;
+  tdate=document.getElementById("calender2").value;
+
+
+  var from=$( "#calender1" ).datepicker('getDate');
+  var to=$("#calender2").datepicker('getDate');
+  if(from.getTime() < new Date('2018-11-01').getTime()  || to.getTime() > new Date('2019-10-31').getTime()   )
+  {
+    alert('Data Available From 01-11-2018 to 31-10-2019');
+    return;
+  }
+  var dates=[];
+  var i=1;
+  dates.push(selectedDate);
+  if(selectedDate!=tdate)
+{  
+
+  do{   
+
+  var x=from;
+   x.setDate(x.getDate()+i);
+   var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=tdate);
+
+}
+
+
+var xaxisdata=[];
+
+for(let i=0;i<dates.length;i++)
+{
+  for(let j=1;j<97;j++)
+  {
+    xaxisdata.push(dates[i]+' : ' + j);
+  }
+}
+
+
+
+  $.post('/dcoffbar/getdcoffbar',{startdate:startdate,enddate:enddate,gen_name:gen_name}, function(res){
+
+    console.log(res);
+    let finalD=[];
+    for(let i=0;i<res.length;i++)
+    {
+      for(let j=0;j<res[i]['dcdata'].length;j++)
+      { if(res[i]['dcdata'][j]=='')
+          res[i]['dcdata'][j]=0;
+
+        finalD.push(res[i]['dcdata'][j]);
+      }
+    }
+
+    //console.log(finalD);
+    //console.log(xaxisdata);
+
+$.post('/dcoffbarreq/getdcoffbarreq',{startdate:startdate,enddate:enddate,gen_name:gen_name}, function(res2){
+ let finalD2=[];
+    for(let i=0;i<res2.length;i++)
+    {
+      for(let j=0;j<res2[i]['dcdata'].length;j++)
+      { if(res2[i]['dcdata'][j]=='')
+          res2[i]['dcdata'][j]=0;
+
+        finalD2.push(res2[i]['dcdata'][j]);
+      }
+    }
+
+Highcharts.chart('chart_div1', {
+
+    chart: {
+        type: 'area',
+        zoomType: 'xy'
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        },
+    title: {
+        text:' DC-OffBar and DC-OffBar Requisition for ' +gen_name+' From Date '+startdate+' to Date '+enddate
+    },
+    xAxis: {
+        categories: xaxisdata,
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    
+    credits: {
+        enabled: false
+    },
+    series: [ {
+        name: 'DC-OffBar',
+        data: finalD,
+        color:' #ADD8E6'
+    },{
+         name: 'DC-OffBar Requisition',
+         data: finalD2,
+         color:'#FA8072'
+     }]
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+});
+
+  });
+
+
+}
+
+
+
+    </script>
+
+
+      <div class="row">
+
+               <div class="col-lg-3">
+    <label for="calender1">FROM DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+
+               <div class="col-lg-3">
+    <label for="calender2">TO DATE</label>
+     <input type="text" class="form-control"   id="calender2">
+</div>
+        <div class="col-lg-4">
+          <label>Generators</label>
+          <select id="dropdown" class="form-control">
+</select>
+      </div>
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-outline-primary form-control" onclick="showOpt()" >submit</button>
+</div>
+</div>
+<div id="chart_div" style="width: 100%; height: 50px;">
+ <center> <h3>Data Available From: <b>01-11-2018 to 31-10-2019</b></h3></center>
+</div>
+<div id="chart_div1" style="width: 100%; height: 500px;">
+</div>
+<div id="chart_div2" style="width: 100%; height: 500px;"></div>
+<!-- <div id="chart_cumm" style="width: 100%; height: 500px;" class="col-lg-4 offset-lg-4"></div> -->

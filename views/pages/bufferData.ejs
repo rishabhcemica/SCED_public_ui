@@ -1,0 +1,122 @@
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script type="text/javascript">
+
+      var selectedDate='';
+      var chartdata;
+      var selectedGenerator;
+      var final;
+      var irbuffer;
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+   // $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+
+
+});
+
+function showOpt(){
+  selectedDate=document.getElementById("calender1").value;
+
+$.post('/gamsbuffer/totalBuffers',{selectedDate:selectedDate},function(res){
+var buffers=JSON.parse(res);
+var bufferDetection={};
+
+for(var key in idtoname){
+
+  bufferDetection[key.toString()]=[];
+}
+
+
+for(var i=0;i<buffers.length;i++){
+
+
+for(var key in idtoname){
+
+if(typeof(buffers[i][key.toString()])!="undefined" && typeof(buffers[i][key.toString()]["artRampUp"])!="undefined" && parseInt(buffers[i][key.toString()]["artRampUp"])!=0){
+bufferDetection[key.toString()].push((i+1).toString()+"+RampUp+"+buffers[i][key.toString()]["artRampUp"].toString());
+
+}
+
+if(typeof(buffers[i][key.toString()])!="undefined" && typeof(buffers[i][key.toString()]["artRampDown"])!="undefined" && parseInt(buffers[i][key.toString()]["artRampDown"])!=0 ){
+bufferDetection[key.toString()].push((i+1).toString()+"+RampDown+"+buffers[i][key.toString()]["artRampDown"].toString());
+  
+}
+if(typeof(buffers[i][key.toString()])!="undefined" && typeof(buffers[i][key.toString()]["artSched"])!="undefined" && parseInt(buffers[i][key.toString()]["artSched"])!=0 ){
+
+bufferDetection[key.toString()].push((i+1).toString()+"+Schedule+"+buffers[i][key.toString()]["artSched"]);
+}
+
+}
+
+var bufferDetection1={}
+
+for(key in bufferDetection ){
+
+if(typeof(bufferDetection[key.toString()][0])!="undefined"){
+  bufferDetection1[key.toString()]=bufferDetection[key.toString()];
+}
+
+}
+//console.log(buffers[i]);
+
+}
+
+var bufferTable='';
+
+bufferTable+='<table class="table table-bordered"><thead><tr><th><h3>Generator</h3> </th><th> <h3>Block & Buffer hit(Buffer Value in MW)</h3></th></tr></thead><tbody>';
+
+for(var key in bufferDetection1){
+var str='';
+for(var j=0;j<bufferDetection1[key.toString()].length-1;j++){
+
+str+=bufferDetection1[key.toString()][j].split("+")[0].toString()+' & '+bufferDetection1[key.toString()][j].split("+")[1].toString()+'('+parseInt(bufferDetection1[key.toString()][j].split("+")[2]).toString()+'), ';
+
+}
+str+=bufferDetection1[key.toString()][j].split("+")[0].toString()+' & '+bufferDetection1[key.toString()][j].split("+")[1].toString()+'('+parseInt(bufferDetection1[key.toString()][j].split("+")[2]).toString()+')';
+
+  bufferTable+='<tr><td><h3>'+idtoname[key.toString()]+'</h3></td><td><h3>'+str+'</h3></td></tr>';
+}
+
+document.getElementById('chart_div').innerHTML=bufferTable;
+
+
+console.log(bufferDetection);
+
+
+
+      });
+
+}
+
+
+
+    </script>
+
+
+      <div class="row">
+               <div class="col-lg-2">
+    <label for="calender1">DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-outline-primary form-control" onclick="showOpt()" >submit</button>
+</div>
+</div>
+<div id="chart_div" class="col-lg-8 offset-lg-2"></div>
+

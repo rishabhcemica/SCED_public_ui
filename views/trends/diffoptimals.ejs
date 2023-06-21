@@ -1,0 +1,562 @@
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://kendo.cdn.telerik.com/2016.3.914/js/kendo.all.min.js"></script>
+ <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.22/pdfmake.min.js"></script>
+   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.39/vfs_fonts.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.7/pako.min.js"></script>
+<script>
+    // Import DejaVu Sans font for embedding
+
+    // NOTE: Only required if the Kendo UI stylesheets are loaded
+    // from a different origin, e.g. cdn.kendostatic.com
+    kendo.pdf.defineFont({
+      "DejaVu Sans": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans.ttf",
+      "DejaVu Sans|Bold": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Bold.ttf",
+      "DejaVu Sans|Bold|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+      "DejaVu Sans|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+      "WebComponentsIcons": "https://kendo.cdn.telerik.com/2017.1.223/styles/fonts/glyphs/WebComponentsIcons.ttf"
+    });
+  </script>
+<style type="text/css">
+  table#milage {
+    background: bisque;
+}
+thead#mlg {
+    background: azure;
+}
+table th {
+    position: -webkit-sticky; 
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: azure;
+}
+</style>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script type="text/javascript">
+
+      var selectedDate='';
+      var selectedGenerator;
+      var chartdata;
+      var final;
+      var jsDate;
+      var variableCost;
+      var genlist=[];
+      var cummlist1=[];
+      var cummlist2=[];
+         var month_names =["Jan","Feb","Mar",
+                      "Apr","May","Jun",
+                      "Jul","Aug","Sep",
+                      "Oct","Nov","Dec"];
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+   // $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+
+/*$.get('/account/getRates',function(res){
+ variableCost=JSON.parse(res);
+ //console.log(genrates);
+}); */
+
+$.post('/gen/getAllGens',function(res){
+var gens=JSON.parse(res);
+console.log(gens);
+  htm='';
+htm+='<option value="ALL">ALL</option>';
+htm+='<option value="AR">NER</option>';
+htm+='<option value="SR">SR</option>';
+htm+='<option value="WR">WR</option>';
+htm+='<option value="ER">ER</option>';
+htm+='<option value="NR">NR</option>';
+for(var i=0;i<gens.length;i++){
+  genlist.push(gens[i]['id']);
+htm+='<option value="'+gens[i]['id']+'">'+gens[i]['name']+'</option>';}
+document.getElementById('dropdown').innerHTML=htm;
+});
+
+});
+
+function showOpt(){
+  selectedDate=document.getElementById("calender1").value;
+ jsDate = $('#calender1').datepicker('getDate');
+ var $yesterday=jsDate;
+ $yesterday.setDate(jsDate.getDate()-1);
+ var dateString = ( '0' + jsDate.getDate()).slice(-2) + '-' +( '0' + ( jsDate.getMonth() + 1 ) ).slice(-2) +'-' + jsDate.getFullYear();
+
+  console.log(dateString);
+var selectedGen=$("#dropdown").val();
+$.post('/Gamspwc/getMillage',{date1:selectedDate,date2:dateString},function(res){
+var millage=JSON.parse(res);
+$.post('/account/getRates',{date:[selectedDate]},function(res){
+
+  var vCost=JSON.parse(res);
+  var vcdate=selectedDate.split("-")[0]+"-"+month_names[parseInt(selectedDate.split("-")[1])-1]+"-"+selectedDate.split("-")[2];
+  console.log(vCost);
+  if(selectedGen=="ALL")
+{
+  
+var htm3='';
+htm3+='<table id="milage" class="table table-bordered"><thead id="mlg"><tr><th colspan="2"></th><th colspan="3">No. Of Instructions</th><th colspan="3">Changes in (MW)</th></tr></thead><thead id="mlg"><tr><th>Generator</th><th>VC</th><th>post SCED</th><th>Pre SCED</th><th>(%)</th><th>Post SCED</th><th>Pre SCED</th><th>(%)</th></tr></thead><tbody id="sc">';
+var sopt=0;
+var ssch=0;
+var copt=0;
+var csch=0;
+var sortArray=[];
+for(var i=0;i<millage.length;i++){
+var pt=parseInt(((millage[i]['dopt']-millage[i]['dsch'])/millage[i]['dsch'])*100);
+var ct=parseInt(((millage[i]['nopt']-millage[i]['nsch'])/millage[i]['nsch'])*100);
+if(millage[i]['dsch']==0){
+  pt='0';
+}
+if(millage[i]['nsch']==0){
+  ct='0';
+}
+sortArray.push({vc:parseInt(vCost[vcdate][millage[i]['id']]),ht:'<tr><td><h5>'+idtoname[millage[i]['id']]+'</h5></td><td><h5>'+vCost[vcdate][millage[i]['id']]+'</h5></td><td><h5>'+millage[i]['nopt']+'</h5></td><td><h5>'+millage[i]['nsch']+'</h5></td><td><h5>'+ct.toString()+'</h5></td><td><h5>'+parseInt(millage[i]['dopt']).toString()+'</h5></td><td><h5>'+parseInt(millage[i]['dsch']).toString()+'</h5></td><td><h5>'+pt+'</h5></td></tr>'});
+
+sopt+=parseInt(millage[i]['dopt']);
+ssch+=parseInt(millage[i]['dsch']);
+copt+=parseInt(millage[i]['nopt']);
+csch+=parseInt(millage[i]['nsch']);
+}
+
+sortArray.sort(function(a, b){return a.vc - b.vc});
+
+
+for(var i=0;i<sortArray.length;i++){
+var pt=parseInt(((millage[i]['dopt']-millage[i]['dsch'])/millage[i]['dsch'])*100);
+var ct=parseInt(((millage[i]['nopt']-millage[i]['nsch'])/millage[i]['nsch'])*100);
+if(millage[i]['dsch']==0){
+  pt='0';
+}
+if(millage[i]['nsch']==0){
+  ct='0';
+}
+htm3+=sortArray[i]['ht'];
+
+}
+var aichanges=parseInt(((copt-csch)/csch)*100);
+var ai=parseInt(((sopt-ssch)/ssch)*100);
+htm3+='<tr><td colspan="2"><h5>AI</h5></td><td><h5>'+copt.toString()+'</h5></td><td><h5>'+csch.toString()+'</h5></td><td><h5>'+aichanges.toString()+'</h5></td><td><h5>'+sopt.toString()+'</h5></td><td><h5>'+ssch.toString()+'</h5></td><td><h5>'+ai.toString()+'</h5></td></tr>';
+htm3+='</tbody></table>';
+document.getElementById('millage').innerHTML=htm3;
+
+}
+});
+
+});
+  $.post('/GenRates/getramp',{date:selectedDate},function(res)
+{
+
+  var ramps=JSON.parse(res);
+
+$.post('/gamsdata/getTodayData',{selectedDate:dateString,selectedGen:selectedGen},function(res){
+  var yesterdayData=JSON.parse(res);
+console.log(yesterdayData);
+$.post('/gamsdata/getTodayData',{selectedDate:selectedDate,selectedGen:selectedGen},function(res){
+var cflag=0;
+   
+chartdata=JSON.parse(res);
+selectedGenerator=idtoname[selectedGen];
+
+if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+  cflag=1;
+}
+
+console.log(chartdata);
+var finaldata=[];
+var cumm=0;
+var cumm1=0;
+
+
+if(cflag==1){
+
+var tt=[];
+tt.push("Generator");
+tt.push("Derivative Of Optimal Schedule");
+tt.push("Derivative Of Schedule");
+finaldata.push(tt);
+var hh=[];
+hh.push("1");
+hh.push(chartdata[1][2]-yesterdayData[96][2]);
+hh.push(chartdata[1][1]-yesterdayData[96][1]);
+if(chartdata[1][2]>yesterdayData[96][2])
+{
+  cumm+=chartdata[1][2]-yesterdayData[96][2];
+
+}else{
+  cumm+=yesterdayData[96][2]-chartdata[1][2];
+}
+
+if(chartdata[1][1]>yesterdayData[96][1])
+{
+  cumm1+=chartdata[1][1]-yesterdayData[96][1];
+
+}else{
+  cumm1+=yesterdayData[96][1]-chartdata[1][1];
+}
+
+finaldata.push(hh);
+for(var i=2;i<chartdata.length;i++){
+var temp=[];
+temp.push(i.toString());
+temp.push(chartdata[i][2]-chartdata[i-1][2]);
+temp.push(chartdata[i][1]-chartdata[i-1][1]);
+if(chartdata[i][2]>chartdata[i-1][2])
+{
+  cumm+=chartdata[i][2]-chartdata[i-1][2];
+
+}else{
+  cumm+=chartdata[i-1][2]-chartdata[i][2];
+}
+
+if(chartdata[i][1]>chartdata[i-1][1])
+{
+  cumm1+=chartdata[i][1]-chartdata[i-1][1];
+
+}else{
+  cumm1+=chartdata[i-1][1]-chartdata[i][1];
+}
+
+finaldata.push(temp);
+}
+
+}
+else{
+
+
+console.log(selectedGen);
+  var tt=[];
+tt.push("Generator");
+tt.push("Derivative Of Optimal Schedule");
+tt.push("Derivative Of Schedule");
+tt.push("Ramp up");
+tt.push("Ramp down");
+finaldata.push(tt);
+var hh=[];
+hh.push("1");
+hh.push(chartdata[1][2]-yesterdayData[96][2]);
+hh.push(chartdata[1][1]-yesterdayData[96][1]);
+hh.push(parseFloat(ramps[selectedGen]['RUP'].split(",")[0]));
+hh.push(-1*parseFloat(ramps[selectedGen]['RDN'].split(",")[0]));
+if(chartdata[1][2]>yesterdayData[96][2])
+{
+  cumm+=chartdata[1][2]-yesterdayData[96][2];
+
+}else{
+  cumm+=yesterdayData[96][2]-chartdata[1][2];
+}
+
+if(chartdata[1][1]>yesterdayData[96][1])
+{
+  cumm1+=chartdata[1][1]-yesterdayData[96][1];
+
+}else{
+  cumm1+=yesterdayData[96][1]-chartdata[1][1];
+}
+
+finaldata.push(hh);
+for(var i=2;i<chartdata.length;i++){
+var temp=[];
+temp.push(i.toString());
+temp.push(chartdata[i][2]-chartdata[i-1][2]);
+temp.push(chartdata[i][1]-chartdata[i-1][1]);
+temp.push(parseFloat(ramps[selectedGen]['RUP'].split(",")[i-1]));
+temp.push(-1*parseFloat(ramps[selectedGen]['RDN'].split(",")[i-1]));
+
+if(chartdata[i][2]>chartdata[i-1][2])
+{
+  cumm+=chartdata[i][2]-chartdata[i-1][2];
+
+}else{
+  cumm+=chartdata[i-1][2]-chartdata[i][2];
+}
+
+if(chartdata[i][1]>chartdata[i-1][1])
+{
+  cumm1+=chartdata[i][1]-chartdata[i-1][1];
+
+}else{
+  cumm1+=chartdata[i-1][1]-chartdata[i][1];
+}
+
+
+finaldata.push(temp);
+}
+
+}
+
+cumm=Math.round(cumm*100)/100;
+cumm1=Math.round(cumm1*100)/100;
+console.log(finaldata);
+final=finaldata;
+ google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+
+      document.getElementById('chart_cumm').innerHTML="<h5> Cumulative of Mod Of Derivative of Optimal Schedule :"+cumm.toString()+" MW </h5>";
+      document.getElementById('chart_cumm1').innerHTML="<h5> Cumulative of Mod Of  Derivative of Schedule :"+cumm1.toString()+" MW </h5>";
+
+});
+
+
+      });
+});
+
+}
+
+// function showVariation(){
+
+//   showOptTest();
+
+
+// }
+
+// function showOptTest(){
+//   selectedDate=document.getElementById("calender1").value;
+//  jsDate = $('#calender1').datepicker('getDate');
+//  var $yesterday=jsDate;
+//  $yesterday.setDate(jsDate.getDate()-1);
+//  var dateString = ( '0' + jsDate.getDate()).slice(-2) + '-' +( '0' + ( jsDate.getMonth() + 1 ) ).slice(-2) +'-' + jsDate.getFullYear();
+
+//   console.log(dateString);
+//   var htm5='';
+// htm5+="<table class='table table-bordered'><thead><tr><th>plant Name</th><th>% Variation</th></tr></thead><tbody>";
+// for(var ss=0;ss<genlist.length;ss++){
+// var selectedGen=genlist[ss];
+// $.post('/gamsdata/getTodayData',{selectedDate:dateString,selectedGen:selectedGen},function(res){
+//   var yesterdayData=JSON.parse(res);
+// console.log(yesterdayData);
+// $.post('/gamsdata/getTodayData',{selectedDate:selectedDate,selectedGen:selectedGen},function(res){
+// var cflag=0;
+   
+// chartdata=JSON.parse(res);
+// selectedGenerator=idtoname[selectedGen];
+
+// if(typeof(selectedGenerator)=="undefined"){
+//   selectedGenerator=selectedGen;
+//   cflag=1;
+// }
+
+// console.log(chartdata);
+// var finaldata=[];
+// var cumm=0;
+// var cumm1=0;
+
+
+// if(cflag==1){
+
+// var tt=[];
+// tt.push("Generator");
+// tt.push("Derivative Of Optimal Schedule");
+// tt.push("Derivative Of Schedule");
+// finaldata.push(tt);
+// var hh=[];
+// hh.push("1");
+// hh.push(chartdata[1][2]-yesterdayData[96][2]);
+// hh.push(chartdata[1][1]-yesterdayData[96][1]);
+// if(chartdata[1][2]>yesterdayData[96][2])
+// {
+//   cumm+=chartdata[1][2]-yesterdayData[96][2];
+
+// }else{
+//   cumm+=yesterdayData[96][2]-chartdata[1][2];
+// }
+
+// if(chartdata[1][1]>yesterdayData[96][1])
+// {
+//   cumm1+=chartdata[1][1]-yesterdayData[96][1];
+
+// }else{
+//   cumm1+=yesterdayData[96][1]-chartdata[1][1];
+// }
+
+// finaldata.push(hh);
+// for(var i=2;i<chartdata.length;i++){
+// var temp=[];
+// temp.push(i.toString());
+// temp.push(chartdata[i][2]-chartdata[i-1][2]);
+// temp.push(chartdata[i][1]-chartdata[i-1][1]);
+// if(chartdata[i][2]>chartdata[i-1][2])
+// {
+//   cumm+=chartdata[i][2]-chartdata[i-1][2];
+
+// }else{
+//   cumm+=chartdata[i-1][2]-chartdata[i][2];
+// }
+
+// if(chartdata[i][1]>chartdata[i-1][1])
+// {
+//   cumm1+=chartdata[i][1]-chartdata[i-1][1];
+
+// }else{
+//   cumm1+=chartdata[i-1][1]-chartdata[i][1];
+// }
+
+// finaldata.push(temp);
+// }
+
+// }
+// else{
+// console.log(selectedGen);
+//   var tt=[];
+// tt.push("Generator");
+// tt.push("Derivative Of Optimal Schedule");
+// tt.push("Derivative Of Schedule");
+// tt.push("Ramp up");
+// tt.push("Ramp down");
+// finaldata.push(tt);
+// var hh=[];
+// hh.push("1");
+// hh.push(chartdata[1][2]-yesterdayData[96][2]);
+// hh.push(chartdata[1][1]-yesterdayData[96][1]);
+// hh.push(parseFloat(rup[selectedGen]));
+// hh.push(-1*parseFloat(rdn[selectedGen]));
+// if(chartdata[1][2]>yesterdayData[96][2])
+// {
+//   cumm+=chartdata[1][2]-yesterdayData[96][2];
+
+// }else{
+//   cumm+=yesterdayData[96][2]-chartdata[1][2];
+// }
+
+// if(chartdata[1][1]>yesterdayData[96][1])
+// {
+//   cumm1+=chartdata[1][1]-yesterdayData[96][1];
+
+// }else{
+//   cumm1+=yesterdayData[96][1]-chartdata[1][1];
+// }
+
+// finaldata.push(hh);
+// for(var i=2;i<chartdata.length;i++){
+// var temp=[];
+// temp.push(i.toString());
+// temp.push(chartdata[i][2]-chartdata[i-1][2]);
+// temp.push(chartdata[i][1]-chartdata[i-1][1]);
+// temp.push(parseFloat(rup[selectedGen]));
+// temp.push(-1*parseFloat(rdn[selectedGen]));
+
+// if(chartdata[i][2]>chartdata[i-1][2])
+// {
+//   cumm+=chartdata[i][2]-chartdata[i-1][2];
+
+// }else{
+//   cumm+=chartdata[i-1][2]-chartdata[i][2];
+// }
+
+// if(chartdata[i][1]>chartdata[i-1][1])
+// {
+//   cumm1+=chartdata[i][1]-chartdata[i-1][1];
+
+// }else{
+//   cumm1+=chartdata[i-1][1]-chartdata[i][1];
+// }
+
+
+// finaldata.push(temp);
+// }
+
+// }
+
+// cumm=Math.round(cumm*100)/100;
+// cumm1=Math.round(cumm1*100)/100;
+// cummlist1.push(cumm);
+// cummlist2.push(cumm1);
+
+// htm5+="<tr><td>"+selectedGen.toString()+"</td><td>"+((cumm/cumm1)*100).toString()+"</td></tr>";
+
+// console.log(finaldata);
+// final=finaldata;
+//  google.charts.load('current', {'packages':['corechart']});
+//      // google.charts.setOnLoadCallback(drawChart);
+
+//       document.getElementById('chart_cumm').innerHTML="<h5>Mod Of Cumulative of Derivative of Optimal Schedule :"+cumm.toString()+" MW </h5>";
+//       document.getElementById('chart_cumm1').innerHTML="<h5>Mod Of Cumulative  Derivative of Schedule :"+cumm1.toString()+" MW </h5>";
+//       });
+// });
+
+// }
+// htm5+="</tbody></table>";
+// document.getElementById('variation').innerHTML=htm5;
+// }
+
+function drawChart(){
+
+  var data = google.visualization.arrayToDataTable(final);
+  var tle='Difference Between Current Optimal And Previous Optimal Despatch For '+selectedGenerator+' For Date '+ selectedDate;
+
+
+        var options = {
+          title:tle,
+                    titleTextStyle:{ color:'black',
+  fontName:'Arial',
+  fontSize:25,
+  bold: true,
+  italic: true },
+          hAxis: {title: 'Block'},
+           vAxis: {format:'# MW'}
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+
+
+}
+
+    </script>
+
+
+      <div class="row">
+               <div class="col-lg-2">
+    <label for="calender1">DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+        <div class="col-lg-4">
+          <label>Generators</label>
+          <select id="dropdown" class="form-control">
+</select>
+      </div>
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-outline-primary form-control" onclick="showOpt()" >submit</button>
+</div>
+<!-- <div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-primary form-control" onclick="showVariation()" >Variation</button>
+</div> -->
+</div>
+<div id="chart_div" style="width: 100%; height: 500px;"></div>
+<div id="chart_cumm" style="width: 100%;" class="col-lg-4 offset-lg-4"></div>
+<div id="chart_cumm1" style="width: 100%;" class="col-lg-4 offset-lg-4"></div>
+<input type="button"  class="col-lg-2 offset-lg-5 btn btn-primary" id="btnExport" value="Export As PDF" onclick="generatePDF('.pdf-page')" />
+<br>
+<div id="millage" style="height:50%;" class="pdf-page size-a5 col-lg-6 offset-lg-3"></div>
+<script type="text/javascript">
+  
+      var generatePDF = function(selector) {
+  // kendo.drawing.drawDOM($("#dsm")).then(function(group) {
+  //   kendo.drawing.pdf.saveAs(group, "Converted PDF.pdf");
+  // });
+  //$('#milage').removeClass('table-responsive');
+
+    kendo.drawing.drawDOM($(selector)).then(function (group) {
+        kendo.drawing.pdf.saveAs(group, "Report.pdf");
+      });
+
+    $('#milage').addClass('table-responsive');
+}
+</script>
+<!-- <div id="variation" class="col-lg-4"></div> -->

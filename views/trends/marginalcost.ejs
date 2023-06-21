@@ -1,0 +1,307 @@
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+
+
+<script src="https://code.highcharts.com/modules/histogram-bellcurve.js"></script>
+
+
+
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script type="text/javascript">
+
+      var selectedDate='';
+      var chartdata;
+      var curr_date=new Date();
+         curr_date.setHours(curr_date.getHours()+5);
+        curr_date.setMinutes(curr_date.getMinutes()+30);
+       curr_date= curr_date.toISOString().slice(0,10);
+var curr_date1=new Date();
+        var hh=curr_date1.getHours();
+        var mm=curr_date1.getMinutes();
+     curr_date=curr_date.split("-").reverse().join("-");
+     var curr_block=Math.ceil(hh*4)+Math.ceil(mm/15.0);
+
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+      $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+
+document.getElementById("calender2").value = today;
+});
+
+function showOpt(){
+
+
+
+  selectedDate=document.getElementById("calender1").value;
+  todate=document.getElementById("calender2").value;
+
+
+
+  var from=$( "#calender1" ).datepicker('getDate');
+  var dates=[];
+  var i=1;
+  dates.push(selectedDate);
+  if(selectedDate!=todate)
+{  
+
+  do{   
+
+  var x=from;
+   x.setDate(x.getDate()+i);
+   var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=todate);
+
+}
+
+console.log(dates);
+
+
+
+  if(selectedDate!=curr_date){
+    curr_block=96;
+  }
+var selectedGen=$("#dropdown").val();
+$.post('/marginalcost/getTodayCost',{selectedDate:dates},function(res){
+   var div=0;
+chartdata=JSON.parse(res);
+console.log(chartdata);
+var avgar=0;
+var avgnr=0;
+var avgsr=0;
+var avgai=0;
+var ner=[];
+var nr=[];
+var sr=[];
+var ai=[];
+var xaxis=[];
+for(var i=1;i<chartdata.length;i++){
+     xaxis.push(chartdata[i][0]);
+     ner.push(chartdata[i][1]);
+     nr.push(chartdata[i][2]);
+     sr.push(chartdata[i][3]);
+     ai.push(chartdata[i][4]);
+     avgar+=chartdata[i][1];
+     avgnr+=chartdata[i][2];
+     avgsr+=chartdata[i][3];
+     avgai+=chartdata[i][4];
+     div++;
+
+}
+avgar=Math.round((avgar/div)*100)/100;
+avgnr=Math.round((avgnr/div)*100)/100;
+avgsr=Math.round((avgsr/div)*100)/100;
+avgai=Math.round((avgai/div)*100)/100;
+
+//console.log(chartdata);
+ // google.charts.load('current', {'packages':['corechart']});
+ //      google.charts.setOnLoadCallback(drawChart);
+      document.getElementById('chart_cumm').innerHTML="<table class='table table-borderd'><thead><tr><th>Average SMP NER</th><th>Average SMP NR</th><th>Average SMP SR</th><th>Average SMP ALL India</th></tr></thead><tbody><tr><td>"+avgar.toString()+"</td><td>"+avgnr.toString()+"</td><td>"+avgsr.toString()+"</td><td>"+avgai.toString()+"</td></tr></tbody></table>";
+
+
+
+
+
+Highcharts.chart('chart_div', {
+
+    chart: {
+        type: 'area'
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        },
+    title: {
+        text:'System Marginal Price From  Date '+selectedDate+' to Date '+todate
+    },
+    xAxis: {
+        categories: xaxis,
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    credits: {
+        enabled: false
+    },
+    series: [{
+        name: 'NER',
+        data: ner,
+        color:' #ADD8E6'
+    }, {
+        name: 'NR',
+        data: nr,
+        color:'#FA8072'
+    }, {
+        name: 'SR',
+        data: sr,
+        color:'#FFF700'
+    }, {
+        name: 'AI',
+        data: ai,
+        color:'#008000'
+    }]
+});
+
+
+
+
+Highcharts.chart('histogram_div', {
+
+   chart: {
+        type: 'histogram',
+        zoomType: 'xy'
+    },
+
+  title: {
+    text: 'SMP histogram'
+  },
+  xAxis: [{
+    title: { text: 'Paisa' },
+    alignTicks: false
+  }],
+
+  yAxis: [{
+    title: { text: 'Frequency' }
+  }],
+
+    series:[{
+    visible:false,
+    showInLegend:false,
+    id:"id0",
+    data: nr
+      },{
+    name:"NR",
+    type:"histogram",
+    baseSeries:"id0",
+    binWidth:1},
+    
+    {visible:false,
+    showInLegend:false,
+    id:"id1",
+    data:ai
+      },
+    {
+    name:"Al",
+    type:"histogram",
+    baseSeries:"id1",
+    binWidth:1,
+    zIndex:0},
+    
+    {visible:false,
+    showInLegend:false,
+    id:"id2",
+    data:sr
+      },
+    {
+    name:"SR",
+    type:"histogram",
+    baseSeries:"id2",
+    binWidth:1,
+    zIndex:0},
+    
+    {visible:false,
+    showInLegend:false,
+    id:"id3",
+    data:ner
+      },
+    {
+    name:"NER",
+    type:"histogram",
+    baseSeries:"id3",
+    binWidth:1,
+    zIndex:0}
+    ]
+});
+
+
+
+
+      });
+
+
+
+
+}
+
+// function drawChart(){
+
+//   var data = google.visualization.arrayToDataTable(chartdata);
+
+//         var options = {
+//           title: 'System Marginal Price',
+//                     titleTextStyle:{ color:'black',
+//   fontName:'Arial',
+//   fontSize:25,
+//   bold: true,
+//   italic: true },
+//           hAxis: {title: 'Block'},
+//           vAxis: {format:'# Paisa'}
+//         };
+
+//         var chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
+//         chart.draw(data, options);
+
+
+// }
+
+
+
+
+
+
+
+
+
+
+    </script>
+
+
+      <div class="row">
+               <div class="col-lg-2">
+    <label for="calender1">FROM DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+
+               <div class="col-lg-2">
+    <label for="calender1">TO DATE</label>
+     <input type="text" class="form-control"   id="calender2">
+</div>
+  
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-outline-primary form-control" onclick="showOpt()" >submit</button>
+</div>
+</div>
+<div id="chart_div" style="width: 100%; height: 500px;"></div>
+<div id="chart_cumm" style="width: 100%;" class="col-lg-6 offset-lg-2"></div>
+<div id="histogram_div" style="width: 100%;height: 500px;"></div>

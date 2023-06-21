@@ -1,0 +1,373 @@
+
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+      <script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+          <script type="text/javascript">
+
+      var selectedDate='';
+      var tdate='';
+      var chartdata;
+      var selectedGenerator;
+
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+    $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+
+document.getElementById("calender2").value = today;
+
+});
+
+function showOpt(){
+  selectedDate=document.getElementById("calender1").value;
+
+
+
+ var fromDate=document.getElementById("calender1").value;
+var toDate=document.getElementById("calender2").value
+ var from=$( "#calender1" ).datepicker('getDate');
+  var dates=[];
+  var prevdates=[];
+  var i=1;
+  dates.push(fromDate);
+  var iyesterday = $( "#calender1" ).datepicker('getDate');
+  console.dir(from);
+  console.dir(iyesterday);
+  iyesterday.setDate(iyesterday.getDate()-1);
+  prevdates.push(( '0' + iyesterday.getDate()).slice(-2) + '-' +( '0' + ( iyesterday.getMonth() + 1 ) ).slice(-2) +'-' + iyesterday.getFullYear());
+if(fromDate!=toDate)
+{  
+
+  do{   
+
+  var x=from;
+  prevdates.push(( '0' + x.getDate()).slice(-2) + '-' +( '0' + ( x.getMonth() + 1 ) ).slice(-2) +'-' + x.getFullYear());
+   x.setDate(x.getDate()+i);
+   var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=toDate);
+
+}
+
+console.log(dates);
+console.log(prevdates);
+
+/*var $yesterday=from;
+ $yesterday.setDate(from.getDate()-1);
+ var dateString = ( '0' + from.getDate()).slice(-2) + '-' +( '0' + ( from.getMonth() + 1 ) ).slice(-2) +'-' + from.getFullYear();
+ console.dir(from);
+ console.log(dateString);
+ console.log(selectedDate); */
+$.post('/gamspwc/getChangesSchedule',{date1:dates,date2:prevdates},function(res){
+  console.log(res);
+  var chn=JSON.parse(res);
+  var xaxisData=[];
+  var up=[];
+  var down=[];
+  var mwup=[];
+  var mwdown=[];
+  var totalmwup=0;
+  var totalmwdown=0;
+  var totalup=0;
+  var totaldown=0;
+
+for(var i=0;i<chn.length;i++){
+  //xaxisData.push((i%96) + 1);
+  xaxisData.push(chn[i][0])
+  up.push(chn[i][1]);
+  totalup+=chn[i][1];
+
+  down.push(chn[i][2]);
+  totaldown+=chn[i][2];
+
+  mwup.push(chn[i][3]);
+  totalmwup+=chn[i][3];
+
+  mwdown.push(chn[i][4]);
+  totalmwdown+=chn[i][4];
+}
+
+totalup/=chn.length;
+totaldown/=chn.length;
+totalmwup/=chn.length;
+totalmwdown/=chn.length;
+
+
+document.getElementById('total1').innerHTML="<table class='table table-borderd'><thead><tr><th>Average SCHEDULE UP COUNT: "+totalup.toFixed(2)+"</th><th>Average SCHEDULE DOWN COUNT: "+totaldown.toFixed(2)+"</th></tr></thead><tbody><tr><td></td><td></td></tr></tbody></table>";
+
+
+
+document.getElementById('total3').innerHTML="<table class='table table-borderd'><thead><tr><th>Average SCHEDULE UP: "+totalmwup.toFixed(2)+"</th><th>Average SCHEDULE DOWN: "+totalmwdown.toFixed(2)+"</th></tr></thead><tbody><tr><td></td><td></td></tr></tbody></table>";
+
+
+
+
+Highcharts.chart('chart_div1', {
+
+    chart: {
+        type: 'area',
+        zoomType: 'xy'
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        },
+    title: {
+        text:'No of Generators Changed Pre SCED for period'+ fromDate + " to " + toDate
+    },
+    xAxis: {
+        categories: xaxisData,
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    credits: {
+        enabled: false
+    },
+    series: [{
+        name: 'SCHEDULE UP COUNT',
+        data: up,
+        color:' #ADD8E6'
+    }, {
+        name: 'SCHEDULE DOWN COUNT',
+        data: down,
+        color:'#FA8072'
+    }]
+});
+
+
+
+Highcharts.chart('chart_div3', {
+
+    chart: {
+        type: 'area',
+        zoomType: 'xy'
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        },
+    title: {
+        text:'MW change in each Block Pre SCED for period'+ fromDate + " to " + toDate
+    },
+    xAxis: {
+        categories: xaxisData,
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    credits: {
+        enabled: false
+    },
+    series: [ {
+        name: 'SCHEDULE UP',
+        data: mwup,
+        color:'#FFF700'
+    }, {
+        name: 'SCHEDULE DOWN',
+        data: mwdown,
+        color:'#008000'
+    }]
+});
+
+
+
+});
+
+$.post('/gamspwc/getChanges',{date:dates},function(res){
+   
+chartdata=JSON.parse(res);
+
+
+console.log(chartdata);
+var xaxisData=[];
+var sch=[];
+var opt=[];
+var pmin=[];
+var pmax=[];
+var totalsch=0;
+var totalopt=0;
+var totalpmin=0;
+var totalpmax=0;
+
+for(var i=0;i<chartdata.length;i++){
+  //xaxisData.push((i%96) +1);
+ xaxisData.push(chartdata[i][0])
+  sch.push(parseInt(chartdata[i][1]));
+  totalsch+= parseInt(chartdata[i][1]);
+
+   opt.push(parseInt(chartdata[i][2]));
+   totalopt+= parseInt(chartdata[i][2]);
+
+    pmax.push(parseInt(chartdata[i][3]));
+    totalpmax+= parseInt(chartdata[i][3]);
+
+     pmin.push(parseInt(chartdata[i][4]));
+     totalpmin+= parseInt(chartdata[i][4]);
+}
+
+totalsch/=chartdata.length;
+totalopt/=chartdata.length;
+totalpmax/=chartdata.length;
+totalpmin/=chartdata.length;
+
+
+
+document.getElementById('total').innerHTML="<table class='table table-borderd'><thead><tr><th>Average SCED UP COUNT: "+totalsch.toFixed(2)+"</th><th>Average SCED DOWN COUNT: "+totalopt.toFixed(2)+"</th></tr></thead><tbody><tr><td></td><td></td></tr></tbody></table>";
+
+document.getElementById('total2').innerHTML="<table class='table table-borderd'><thead><tr><th>Average SCED UP: "+totalpmax.toFixed(2)+"</th><th>Average SCED DOWN: "+totalpmin.toFixed(2)+"</th></tr></thead><tbody><tr><td></td><td></td></tr></tbody></table>";
+
+
+
+
+Highcharts.chart('chart_div', {
+
+    chart: {
+        type: 'area',
+        zoomType: 'xy'
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        },
+    title: {
+        text:'No of Generators Changed Post SCED for period'+ fromDate + " to " + toDate
+    },
+    xAxis: {
+        categories: xaxisData,
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    credits: {
+        enabled: false
+    },
+    series: [{
+        name: 'SCED UP COUNT',
+        data: sch,
+        color:' #ADD8E6'
+    }, {
+        name: 'SCED DOWN COUNT',
+        data: opt,
+        color:'#FA8072'
+    }]
+});
+
+Highcharts.chart('chart_div2', {
+
+    chart: {
+        type: 'area',
+        zoomType: 'xy'
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        },
+    title: {
+        text:'MW change in each Block Post SCED for period'+ fromDate + " to " + toDate
+    },
+    xAxis: {
+        categories: xaxisData,
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    credits: {
+        enabled: false
+    },
+    series: [ {
+        name: 'SCED UP',
+        data: pmax,
+        color:'#FFF700'
+    }, {
+        name: 'SCED DOWN',
+        data: pmin,
+        color:'#008000'
+    }]
+});
+
+
+
+ // google.charts.load('current', {'packages':['corechart']});
+ //      google.charts.setOnLoadCallback(drawChart);
+
+      //document.getElementById('chart_cumm').innerHTML="<h3>Cummulative of the above trend is :"+cumm.toString()+" MW </h3>";
+      });
+
+}
+</script>
+
+
+      <div class="row">
+
+               <div class="col-lg-3">
+    <label for="calender1">FROM DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+
+<div class="col-lg-3">
+    <label for="calender1">To DATE</label>
+     <input type="text" class="form-control"   id="calender2">
+</div>
+
+
+
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-outline-primary form-control" onclick="showOpt()" >submit</button>
+</div>
+</div>
+<div id="chart_div" style="width: 100%; height: 500px;"></div>
+<div id="total" style="width: 100%; height: 100px;"></div>
+<div id="chart_div1" style="width: 100%; height: 500px;"></div>
+<div id="total1" style="width: 100%; height: 100px;"></div>
+<div id="chart_div2" style="width: 100%; height: 500px;"></div>
+<div id="total2" style="width: 100%; height: 100px;"></div>
+<div id="chart_div3" style="width: 100%; height: 500px;"></div>
+<div id="total3" style="width: 100%; height: 100px;"></div>

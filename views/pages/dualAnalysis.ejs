@@ -1,0 +1,370 @@
+    
+  <script src="https://kendo.cdn.telerik.com/2016.3.914/js/kendo.all.min.js"></script>
+ <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.22/pdfmake.min.js"></script>
+   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.39/vfs_fonts.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.7/pako.min.js"></script>
+<script>
+    // Import DejaVu Sans font for embedding
+
+    // NOTE: Only required if the Kendo UI stylesheets are loaded
+    // from a different origin, e.g. cdn.kendostatic.com
+    kendo.pdf.defineFont({
+      "DejaVu Sans": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans.ttf",
+      "DejaVu Sans|Bold": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Bold.ttf",
+      "DejaVu Sans|Bold|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+      "DejaVu Sans|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+      "WebComponentsIcons": "https://kendo.cdn.telerik.com/2017.1.223/styles/fonts/glyphs/WebComponentsIcons.ttf"
+    });
+  </script>
+
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+  <style type="text/css">
+    
+
+table.dataTable thead .sorting:after,
+table.dataTable thead .sorting:before,
+table.dataTable thead .sorting_asc:after,
+table.dataTable thead .sorting_asc:before,
+table.dataTable thead .sorting_asc_disabled:after,
+table.dataTable thead .sorting_asc_disabled:before,
+table.dataTable thead .sorting_desc:after,
+table.dataTable thead .sorting_desc:before,
+table.dataTable thead .sorting_desc_disabled:after,
+table.dataTable thead .sorting_desc_disabled:before {
+bottom: .5em;
+}
+
+td.highlight {
+    background-color: deepskyblue !important;
+}
+
+table th {
+    position: -webkit-sticky; 
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background:bisque;
+}
+
+
+
+  </style>
+    <script type="text/javascript">
+
+      var selectedDate='';
+      var initialDate='';
+      var finalDate='';
+      var chartdata;
+      var selectedGenerator;
+      var final;
+       var month_names =["Jan","Feb","Mar",
+                      "Apr","May","Jun",
+                      "Jul","Aug","Sep",
+                      "Oct","Nov","Dec"];
+
+            var curr_date=new Date();
+         curr_date.setHours(curr_date.getHours()+5);
+        curr_date.setMinutes(curr_date.getMinutes()+30);
+       curr_date= curr_date.toISOString().slice(0,10);
+var curr_date1=new Date();
+        var hh=curr_date1.getHours();
+        var mm=curr_date1.getMinutes();
+     curr_date=curr_date.split("-").reverse().join("-");
+     var curr_block=Math.ceil(hh*4)+Math.ceil(mm/15.0);
+     var predictedBlock=curr_block+2;
+     if(curr_block==95){
+      predictedBlock=1;
+
+     }
+     if(curr_block==96){
+      predictedBlock=2;
+     }
+      //var selectedDate=curr_date;
+
+
+
+
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+    $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+   // $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+document.getElementById("calender2").value = today;
+
+
+
+
+
+});
+
+function dualAnalysis(){
+
+  var selectedDate=document.getElementById("calender1").value;
+  var todate=document.getElementById("calender2").value;
+
+  initialDate=selectedDate;
+  finalDate=todate;
+
+var selectedSort="pmax";
+
+  var from=$( "#calender1" ).datepicker('getDate');
+  var dates=[];
+  var i=1;
+  dates.push(selectedDate);
+
+  if(selectedDate!=todate)
+{
+
+do{   
+
+var x=from;
+x.setDate(x.getDate()+i);
+var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+dd='0'+dd;
+} 
+if(mm<10){
+mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=todate);
+
+
+}
+
+
+
+ $.post('/account/getRates',{date:dates},function(res){
+
+  var vcdata=JSON.parse(res);
+  console.log(vcdata);
+
+$.post('/gamsdual/getDualAll',{selectedDate:dates},function(res){
+
+
+
+
+
+
+var dualdata=JSON.parse(res);
+var sortArray=[];
+
+var vc={};
+
+console.log(dualdata);
+
+var totalBlock=0;
+for(var d=0;d<dates.length;d++){
+if(dates[d]==curr_date)
+{
+totalBlock+=curr_block;
+
+}else{
+
+totalBlock+=96;
+
+}
+
+}
+
+
+ for (key in dualdata)
+ {
+
+vc[key]=0;
+var sum=0;
+ for(var d=0;d<dates.length;d++){
+var dd=dates[d].split("-")[0]+"-"+month_names[parseInt(dates[d].split("-")[1])-1]+"-"+dates[d].split("-")[2];
+sum+=parseFloat(vcdata[dd][key]);
+
+
+ }
+vc[key]=parseInt(sum/dates.length);
+
+ }
+
+
+var htm1='';
+htm1+='<table id="dtBasicExample" class="row-border hover order-column table-sm" cellspacing="0" width="50%"><thead><tr><th colspan="12"><h3> <center>Analysis Of Duals on The Basis of Sorting on Dual Of RUP/RDN/PMAX/PMIN</center></h3></th></tr><tr><th colspan="12"><h3><center> From Date '+initialDate+' to Date '+finalDate+' and  Total Blocks ('+totalBlock+')</center></h3></th></tr><tr><th class="th-sm">S.NO.</th><th class="th-sm">GENERATOR</th><th class="th-sm">VC(Avg.)</th><th class="th-sm">RUP(p/u)</th><th class="th-sm">RDN(p/u)</th><th class="th-sm">PMAX(p/u)</th><th class="th-sm">PMIN(p/u)</th><th class="th-sm">Count Rup(%)</th><th class="th-sm">Count Rdn(%)</th><th class="th-sm">Count Pmax(%)</th><th class="th-sm">Count Pmin(%)</th><th>Count of all count</th></tr></thead><tbody>';
+
+
+
+var totalCountUp=0;
+var totalCountDn=0;
+var totalPmax=0;
+var totalPmin=0;
+
+if(selectedSort=='pmax'){
+  var n=1;
+
+
+for(key in dualdata){
+
+  var countofall=parseInt(parseInt(dualdata[key]['cpmax'])/totalBlock*100)+parseInt(parseInt(dualdata[key]['cpmin'])/totalBlock*100)+parseInt(parseInt(dualdata[key]['crup'])/totalBlock*100)+parseInt(parseInt(dualdata[key]['crdn'])/totalBlock*100);
+var a=0;
+var b=0;
+var c=0;
+var d=0;
+if(dualdata[key]['cpmax']!=0){
+  a=parseInt(dualdata[key]['pmax']/dualdata[key]['cpmax']);
+}
+if(dualdata[key]['cpmin']!=0){
+  b=parseInt(dualdata[key]['pmin']/dualdata[key]['cpmin']);
+}
+if(dualdata[key]['crup']!=0){
+  c=parseInt(dualdata[key]['rup']/dualdata[key]['crup']);
+}
+if(dualdata[key]['crdn']!=0){
+  d=parseInt(dualdata[key]['rdn']/dualdata[key]['crdn']);
+}
+
+
+sortArray.push({pmax:dualdata[key]['pmax'],ht:'<tr><td><h3>'+n+'</h3></td><td><h3>'+idtoname[key]+'</h3></td><td><h3>'+vc[key].toString()+'</h3></td><td><h3>'+a+'</h3></td><td><h3>'+b+'</h3></td><td><h3>'+c+'</h3></td><td><h3>'+d+'</h3></td><td><h3>'+parseInt(parseInt(dualdata[key]['cpmax'])/totalBlock*100)+'</h3></td><td><h3>'+parseInt(parseInt(dualdata[key]['cpmin'])/totalBlock*100)+'</h3></td><td><h3>'+parseInt(parseInt(dualdata[key]['crup'])/totalBlock*100)+'</h3></td><td><h3>'+parseInt(parseInt(dualdata[key]['crdn'])/totalBlock*100)+'</h3></td><td><h3>'+countofall+'</h3></td></tr>'});
+
+
+totalCountUp+=parseInt(parseInt(dualdata[key]['cpmax'])/totalBlock*100);
+totalCountDn+=parseInt(parseInt(dualdata[key]['cpmin'])/totalBlock*100)
+totalPmax+=parseInt(parseInt(dualdata[key]['crup'])/totalBlock*100)
+totalPmin+=parseInt(parseInt(dualdata[key]['crdn'])/totalBlock*100)
+
+n++;
+}
+
+sortArray.sort(function(a, b){return a.pmax - b.pmax});
+
+}else if(selectedSort=='pmin'){
+
+  for(key in dualdata){
+sortArray.push({pmin:dualdata[key]['pmin'],ht:'<tr><td><h3>'+idtoname[key]+'</h3></td><td><h3>'+parseInt(dualdata[key]['pmax']/totalBlock*10)/10+'</h3></td><td><h3>'+parseInt(dualdata[key]['pmin']/totalBlock*10)/10+'</h3></td><td><h3>'+parseInt(dualdata[key]['rup']/totalBlock*10)/10+'</h3></td><td><h3>'+parseInt(dualdata[key]['rdn']/totalBlock*10)/10+'</h3></td></tr>'});
+}
+
+sortArray.sort(function(a, b){return a.pmin - b.pmin});
+
+
+
+}else if(selectedSort=='rup'){
+
+  for(key in dualdata){
+sortArray.push({rup:dualdata[key]['rup'],ht:'<tr><td><h3>'+idtoname[key]+'</h3></td><td><h3>'+parseInt(dualdata[key]['pmax']/totalBlock*10)/10+'</h3></td><td><h3>'+parseInt(dualdata[key]['pmin']/totalBlock*10)/10+'</h3></td><td><h3>'+parseInt(dualdata[key]['rup']/totalBlock*10)/10+'</h3></td><td><h3>'+parseInt(dualdata[key]['rdn']/totalBlock*10)/10+'</h3></td></tr>'});
+}
+
+sortArray.sort(function(a, b){return a.rup - b.rup});
+
+
+
+}else{
+
+
+
+  for(key in dualdata){
+sortArray.push({rdn:dualdata[key]['rdn'],ht:'<tr><td><h3>'+idtoname[key]+'</h3></td><td><h3>'+parseInt(dualdata[key]['pmax']/totalBlock*10)/10+'</h3></td><td><h3>'+parseInt(dualdata[key]['pmin']/totalBlock*10)/10+'</h3></td><td><h3>'+parseInt(dualdata[key]['rup']/totalBlock*10)/10+'</h3></td><td><h3>'+parseInt(dualdata[key]['rdn']/totalBlock*10)/10+'</h3></td></tr>'});
+}
+
+sortArray.sort(function(a, b){return a.rdn - b.rdn});
+
+
+
+}
+
+for(var l=0;l<sortArray.length;l++){
+  htm1+=sortArray[l]['ht'];
+}
+// htm1+='<tr><td></td><td>'+parseInt(totalCountUp/dates.length)+'</td><td>'+parseInt(totalCountDn/dates.length)+'</td><td>'+parseInt(totalPmin/dates.length)+'</td><td>'+parseInt(totalPmax/dates.length)+'</td></tr>';
+htm1+='</tbody><tfoot><tr><th>S.NO.</th><th>GENERATOR</th><th>VC(Avg.)</th><th>RUP(p/u)</th><th>RDN(p/u)</th><th>PMAX(p/u)</th><th>PMIN(p/u)</th><th>'+parseInt((totalCountUp/49))+'</th><th>'+parseInt((totalCountDn/49))+'</th><th>'+parseInt((totalPmax/49))+'</th><th>'+parseInt((totalPmin/49))+'</th><th></th></tr></tfoot></table>';
+
+document.getElementById('chart_div').innerHTML=htm1;
+
+  // $('#myTable tr:even').addClass('table-warning');
+  //    $('#myTable tr:odd').addClass('table-danger');
+
+  var table=$('#dtBasicExample').DataTable({"iDisplayLength": 50});
+$('.dataTables_length').addClass('bs-select');
+
+$('#dtBasicExample tbody')
+        .on( 'dbclick', 'td', function () {
+            var colIdx = table.cell(this).index().column;
+ 
+            $( table.cells().nodes() ).removeClass( 'highlight' );
+            $( table.column( colIdx ).nodes() ).addClass( 'highlight' );
+        } );
+
+
+
+ 
+});
+
+});
+
+
+}
+
+
+
+</script>
+
+    <div class="row">
+               <div class="col-lg-2">
+    <label for="calender1">FROM DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+
+
+               <div class="col-lg-2">
+    <label for="calender2">TO DATE</label>
+     <input type="text" class="form-control"   id="calender2">
+</div>
+
+
+<div class="col-lg-3">
+  <label>submit</label>
+  <button class="btn btn-outline-primary form-control" onclick="dualAnalysis()" >submit</button>
+</div>
+
+<div class="col-lg-3">
+<input type="button"  class="  btn btn-success" style="width:100%;margin-top:25px;" id="btnExport" value="Export As PDF" onclick="generatePDF('#dtBasicExample')" />
+</div>
+
+</div>
+<!-- <div class="row">
+  <div class="col-lg-6 offset-lg-3 alert alert-success"> <h3>Analysis Of Duals on The Basis of Sorting on Dual Of RUP/RDN/PMAX/PMIN</h3> </div>
+</div> -->
+
+<div class="row">
+<div id="chart_div" class="col-lg-12"></div>
+</div>
+
+<script type="text/javascript">
+  
+      var generatePDF = function(selector) {
+  // kendo.drawing.drawDOM($("#dsm")).then(function(group) {
+  //   kendo.drawing.pdf.saveAs(group, "Converted PDF.pdf");
+  // });
+  //$('#milage').removeClass('table-responsive');
+
+    kendo.drawing.drawDOM($(selector)).then(function (group) {
+        kendo.drawing.pdf.saveAs(group, "dual\:"+initialDate+"\:"+finalDate+".pdf");
+      });
+
+    //$('#dtBasicExample').addClass('table-responsive');
+}
+</script>

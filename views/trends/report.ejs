@@ -1,0 +1,451 @@
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+
+
+
+ <script src="https://kendo.cdn.telerik.com/2016.3.914/js/kendo.all.min.js"></script>
+ <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.22/pdfmake.min.js"></script>
+   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.39/vfs_fonts.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.7/pako.min.js"></script>
+<script>
+    // Import DejaVu Sans font for embedding
+
+    // NOTE: Only required if the Kendo UI stylesheets are loaded
+    // from a different origin, e.g. cdn.kendostatic.com
+    kendo.pdf.defineFont({
+      "DejaVu Sans": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans.ttf",
+      "DejaVu Sans|Bold": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Bold.ttf",
+      "DejaVu Sans|Bold|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+      "DejaVu Sans|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+      "WebComponentsIcons": "https://kendo.cdn.telerik.com/2017.1.223/styles/fonts/glyphs/WebComponentsIcons.ttf"
+    });
+  </script>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+
+ 
+
+<style type="text/css">
+
+table.dataTable thead .sorting:after,
+table.dataTable thead .sorting:before,
+table.dataTable thead .sorting_asc:after,
+table.dataTable thead .sorting_asc:before,
+table.dataTable thead .sorting_asc_disabled:after,
+table.dataTable thead .sorting_asc_disabled:before,
+table.dataTable thead .sorting_desc:after,
+table.dataTable thead .sorting_desc:before,
+table.dataTable thead .sorting_desc_disabled:after,
+table.dataTable thead .sorting_desc_disabled:before {
+bottom: .5em;
+}
+
+td.highlight {
+    background-color: deepskyblue !important;
+}
+
+table th {
+    position: -webkit-sticky; 
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background:bisque;
+}
+
+/*  table#milage {
+    background: bisque;
+}
+thead#mlg {
+    background: azure;
+}
+table th {
+    position: -webkit-sticky; 
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: azure;
+}*/
+</style>
+<script type="text/javascript">
+
+  var month_names =["Jan","Feb","Mar",
+                      "Apr","May","Jun",
+                      "Jul","Aug","Sep",
+                      "Oct","Nov","Dec"];
+                      var final;
+                      var final1;
+                       var curr_date=new Date();
+         curr_date.setHours(curr_date.getHours()+5);
+        curr_date.setMinutes(curr_date.getMinutes()+30);
+       curr_date= curr_date.toISOString().slice(0,10);
+var curr_date1=new Date();
+        var hh=curr_date1.getHours();
+        var mm=curr_date1.getMinutes();
+     curr_date=curr_date.split("-").reverse().join("-");
+     var curr_block=Math.ceil(hh*4)+Math.ceil(mm/15.0);
+     var predictedBlock=curr_block+2;
+
+  $(function(){
+
+  $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+    $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+document.getElementById("calender2").value = today;
+
+});
+
+
+
+  
+function show(){
+ 
+  var fromDate=document.getElementById("calender1").value;
+var toDate=document.getElementById("calender2").value;
+
+document.getElementById('periodlbl').innerHTML="Report for period: "+ fromDate + " to "+ toDate;
+ var from=$( "#calender1" ).datepicker('getDate');
+  var dates=[];
+  var i=1;
+  dates.push(fromDate);
+  if(fromDate!=toDate)
+{  
+
+  do{   
+
+  var x=from;
+   x.setDate(x.getDate()+i);
+   var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=toDate);
+
+}
+
+console.log(dates);
+
+var $yesterday=from;
+ $yesterday.setDate(from.getDate()-1);
+ var dateString = ( '0' + from.getDate()).slice(-2) + '-' +( '0' + ( from.getMonth() + 1 ) ).slice(-2) +'-' + from.getFullYear();
+
+ $.post('/gamspwc/getUtilAvail',{dates:dates},function(res){
+var avail=JSON.parse(res);
+var selectedDate=dates[0];
+console.log(avail);
+$.post('/account/getRates',{date:[selectedDate]},function(res){
+var vCost=JSON.parse(res);
+
+var vcdate=selectedDate.split("-")[0]+"-"+month_names[parseInt(selectedDate.split("-")[1])-1]+"-"+selectedDate.split("-")[2];
+var har=0;
+if(fromDate==toDate && fromDate==curr_date){
+har=predictedBlock;
+
+}else{
+ har=dates.length*96;
+}
+console.log(har);
+var utilArray=[];
+var allv=0;
+var allpre=0;
+var allpost=0;
+
+for(var i=0;i<avail.length;i++){
+  console.log(har);
+var av=parseInt((parseInt(avail[i]['sumdc']/har)/parseInt(IC[avail[i]['id']]))*100);
+var utilpre=parseInt(((avail[i]['sumsch']/har)/(avail[i]['sumdc']/har))*100);
+var utilpost=parseInt(((avail[i]['sumopt']/har)/(avail[i]['sumdc']/har))*100);
+if(parseInt(avail[i]['sumdc']/har)==0){
+  utilpost=0;
+  utilpre=0;
+}
+
+utilArray.push({vc:vCost[vcdate][avail[i]['id']],ht:'<tr><td>'+idtoname[avail[i]['id']]+'</td><td>'+vCost[vcdate][avail[i]['id']]+'</td><td>'+av.toString()+'</td><td>'+utilpre.toString()+'</td><td>'+utilpost.toString()+'</td></tr>',gen:idtoname[avail[i]['id']],av:av,utilpre:utilpre,utilpost:utilpost});
+
+allv+=av;
+allpre+=utilpre;
+allpost+=utilpost;
+
+}
+
+utilArray.sort(function(a, b){return a.vc - b.vc});
+var graph=[];
+var temp=[];
+temp.push("Generator");
+temp.push("availability");
+temp.push("Utilization Pre SCED");
+temp.push("Utilization Post SCED");
+graph.push(temp);
+var htm4='';
+htm4+='<table id="milage1" class="row-border hover order-column table-sm" cellspacing="0"><thead><tr><th>Gen</th><th>VC</th><th>Availability</th><th>Utilization Pre SCED</th><th>Utilization Post SCED</th></tr></thead><tbody>';
+for(var i=0;i<utilArray.length;i++){
+  var tt=[];
+htm4+=utilArray[i]['ht'];
+tt.push(utilArray[i]['gen']);
+tt.push(utilArray[i]['av']);
+tt.push(utilArray[i]['utilpre']);
+tt.push(utilArray[i]['utilpost']);
+graph.push(tt);
+}
+final1=graph;
+htm4+='<tr><td>AI</td><td>XX</td><td>'+parseInt(allv/47).toString()+'</td><td>'+parseInt(allpre/47).toString()+'</td><td>'+parseInt(allpost/47).toString()+'</td></tr>';
+htm4+='</tbody></table>';
+//document.getElementById('avail').innerHTML=htm4;
+
+ var table=$('#milage1').DataTable({"iDisplayLength": 50});
+$('.dataTables_length').addClass('bs-select');
+
+$('#milage1 tbody')
+        .on( 'dbclick', 'td', function () {
+            var colIdx = table.cell(this).index().column;
+
+            console.log(colIdx)
+ 
+            $( table.cells().nodes() ).removeClass( 'highlight' );
+            $( table.column( colIdx ).nodes() ).addClass( 'highlight' );
+        } );
+
+
+
+ google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart1);
+});
+ });
+
+$.post('/gamspwc/getMillageRange',{date1:dates,date2:dateString},function(res){
+
+var millage=JSON.parse(res);
+var selectedDate=dates[0];
+$.post('/account/getRates',{date:[selectedDate]},function(res){
+
+  var vCost=JSON.parse(res);
+  var graph=[];
+  var temp=[];
+  temp.push("Generator");
+  temp.push("Instructions");
+  temp.push("Perturbations");
+  graph.push(temp);
+  var vcdate=selectedDate.split("-")[0]+"-"+month_names[parseInt(selectedDate.split("-")[1])-1]+"-"+selectedDate.split("-")[2];
+  //console.log(vCost);
+
+  
+var htm3='';
+htm3+='<table id="milage" class="row-border hover order-column table-sm" cellspacing="0" ><thead ><tr><th colspan="2" class="th-sm">XYZ</th><th colspan="3" class="th-sm">No. Of Instructinos</th><th colspan="3" class="th-sm">Changes in (MW)</th></tr><tr><th class="th-sm">Generator</th><th class="th-sm">VC</th><th class="th-sm">Post SCED</th><th class="th-sm">Pre SCED</th><th class="th-sm">%</th><th class="th-sm">Post SCED</th><th class="th-sm">Pre SCED</th><th class="th-sm">%</th></tr></thead><tbody>';
+var sopt=0;
+var ssch=0;
+var copt=0;
+var csch=0;
+
+var sortArray=[];
+for(var i=0;i<millage.length;i++){
+  // var tt=[];
+var pt=parseInt(((millage[i]['dopt']-millage[i]['dsch'])/millage[i]['dsch'])*100);
+var ct=parseInt(((millage[i]['nopt']-millage[i]['nsch'])/millage[i]['nsch'])*100);
+if(millage[i]['dsch']==0){
+  pt='0';
+}
+if(millage[i]['nsch']==0){
+  ct='0';
+}
+sortArray.push({vc:parseInt(vCost[vcdate][millage[i]['id']]),ht:'<tr><td><h5>'+idtoname[millage[i]['id']]+'</h5></td><td><h5>'+vCost[vcdate][millage[i]['id']]+'</h5></td><td><h5>'+millage[i]['nopt']+'</h5></td><td><h5>'+millage[i]['nsch']+'</h5></td><td><h5>'+ct.toString()+'</h5></td><td><h5>'+parseInt(millage[i]['dopt']).toString()+'</h5></td><td><h5>'+parseInt(millage[i]['dsch']).toString()+'</h5></td><td><h5>'+pt+'</h5></td></tr>',ct:ct,pt:pt,gen:idtoname[millage[i]['id']]});
+
+sopt+=parseInt(millage[i]['dopt']);
+ssch+=parseInt(millage[i]['dsch']);
+copt+=parseInt(millage[i]['nopt']);
+csch+=parseInt(millage[i]['nsch']);
+// tt.push(idtoname[millage[i]['id']]);
+// tt.push(ct);
+// tt.push(pt);
+// graph.push(tt);
+}
+
+sortArray.sort(function(a, b){return a.vc - b.vc});
+console.log(sortArray);
+
+
+for(var i=0;i<sortArray.length;i++){
+  var tt=[];
+var pt=parseInt(((millage[i]['dopt']-millage[i]['dsch'])/millage[i]['dsch'])*100);
+var ct=parseInt(((millage[i]['nopt']-millage[i]['nsch'])/millage[i]['nsch'])*100);
+if(millage[i]['dsch']==0){
+  pt='0';
+}
+if(millage[i]['nsch']==0){
+  ct='0';
+}
+htm3+=sortArray[i]['ht'];
+
+
+tt.push(sortArray[i]['gen']);
+tt.push(parseInt(sortArray[i]['ct']));
+tt.push(parseInt(sortArray[i]['pt']));
+graph.push(tt);
+}
+
+
+final=graph;
+var aichanges=parseInt(((copt-csch)/csch)*100);
+var ai=parseInt(((sopt-ssch)/ssch)*100);
+htm3+='<tr><td colspan="1"><h5>AI</h5></td><td>VC</td><td><h5>'+copt.toString()+'</h5></td><td><h5>'+csch.toString()+'</h5></td><td><h5>'+aichanges.toString()+'</h5></td><td><h5>'+sopt.toString()+'</h5></td><td><h5>'+ssch.toString()+'</h5></td><td><h5>'+ai.toString()+'</h5></td></tr>';
+htm3+='</tbody></table>';
+
+// htm3+='</tbody><tfoot><tr><td colspan="2"><h5>AI</h5></td><td><h5>'+copt.toString()+'</h5></td><td><h5>'+csch.toString()+'</h5></td><td><h5>'+aichanges.toString()+'</h5></td><td><h5>'+sopt.toString()+'</h5></td><td><h5>'+ssch.toString()+'</h5></td><td><h5>'+ai.toString()+'</h5></td></tr></tfoot></table>';
+
+
+document.getElementById('millage').innerHTML=htm3;
+
+
+  var table=$('#milage').DataTable({"iDisplayLength": 55});
+$('.dataTables_length').addClass('bs-select');
+
+$('#milage tbody')
+        .on( 'dbclick', 'td', function () {
+            var colIdx = table.cell(this).index().column;
+
+            console.log(colIdx)
+ 
+            $( table.cells().nodes() ).removeClass( 'highlight' );
+            $( table.column( colIdx ).nodes() ).addClass( 'highlight' );
+        } );
+
+
+
+ google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+
+
+});
+
+
+
+
+});
+
+
+
+}
+
+function drawChart(){
+
+  var data = google.visualization.arrayToDataTable(final);
+tle='Instructions and Perturbations in (%)';
+        var options = {
+          title: tle,
+                    titleTextStyle:{ color:'black',
+  fontName:'Arial',
+  fontSize:25,
+  bold: true,
+  italic: true }
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+
+
+}
+
+function drawChart1(){
+
+  var data = google.visualization.arrayToDataTable(final1);
+tle='Availability and Utilization (pre and post SCED)';
+        var options = {
+          title: tle,
+                    titleTextStyle:{ color:'black',
+  fontName:'Arial',
+  fontSize:25,
+  bold: true,
+  italic: true }
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_div1'));
+        //chart.draw(data, options);
+
+
+}
+
+</script>
+
+
+<div class="row">
+
+               <div class="col-lg-3">
+    <label for="calender1">FROM DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+
+               <div class="col-lg-3">
+    <label for="calender2">TO DATE</label>
+     <input type="text" class="form-control"   id="calender2">
+</div>
+
+<div class="col-lg-3">
+<label for="show">EDIT</label>
+ <button class="btn btn-outline-primary form-control" id="show" onclick="show()">SHOW</button>
+</div>
+
+<div class="col-lg-3">
+  <label for="btnExport">Get PDF of Reports</label>
+  <button class="btn btn-outline-primary form-control" id="btnExport" onclick="generatePDF('#tableid')">Export As PDF</button>
+</div>
+
+</div>
+
+<div id="tableid">
+  <div class="row">
+    <label id='periodlbl'></label>
+  </div>
+
+ <div class="row"> 
+<div class="col-lg-8 offset-lg-2" id="millage"  ></div>
+<!-- <div class="col-lg-6" id="avail" class="pdf-page size-a5 col-lg-6 offset-lg-3"></div> -->
+</div>
+</div>
+
+
+<div class="row">
+<div class="col-lg-8 offset-lg-2" id="chart_div" style="width: 100%; height: 500px;"></div>
+<!-- <div class="col-lg-6" id="chart_div1" style="width: 100%; height: 500px;"></div> -->
+</div>
+
+
+
+<script type="text/javascript">
+  
+      var generatePDF = function(selector) {
+
+  // kendo.drawing.drawDOM($("#dsm")).then(function(group) {
+  //   kendo.drawing.pdf.saveAs(group, "Converted PDF.pdf");
+  // });
+  //$('#milage').removeClass('table-responsive');
+console.log('Enetered generate PDF');
+    kendo.drawing.drawDOM($(selector)).then(function (group) {
+        var fromDate=document.getElementById("calender1").value;
+var toDate=document.getElementById("calender2").value;
+        kendo.drawing.pdf.saveAs(group, "Easeop_"+fromDate+"_"+toDate+".pdf");
+      });
+
+    //$('#millage').addClass('table-responsive');
+}
+</script>

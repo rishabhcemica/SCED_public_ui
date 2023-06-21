@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title></title>
+
+
+
+
+
+
+
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/export-data.js"></script>
+    <style>
+        #systemReport {
+            margin-top: 2%;
+            width: 60%;
+            margin-left: 20%;
+            font-family: sans-serif;
+        }
+    </style>
+</head>
+
+<body onload="Fetchgenlist()">
+    <style type="text/css">
+        thead#sysreport {
+            background: bisque;
+        }
+
+        table.table.table-bordered {
+            background: ghostwhite;
+        }
+    </style>
+
+
+    <script type="text/javascript">
+        gen_list = {};
+        NR = {};
+        WR = {};
+        SR = {};
+        ER = {};
+        NER = {};
+        NR_list = [];
+        WR_list = [];
+        SR_list = [];
+        ER_list = [];
+        NER_list = [];
+        All_list = [];
+        Check_list = [];
+
+        function ALL_fun() {
+            console.log("ALL fun called!");
+            if (document.getElementById('ALL').checked == true) {
+                for (item in gen_list) {
+                    document.getElementById(item).checked = true;
+                }
+            }
+            else {
+                for (item in gen_list) {
+                    document.getElementById(item).checked = false;
+                }
+            }
+        }
+        function NR_fun() {
+            if (document.getElementById('NR').checked == true) {
+                for (item in NR) {
+                    document.getElementById(item).checked = true;
+                }
+            }
+            else {
+                for (item in NR) {
+                    document.getElementById(item).checked = false;
+                }
+            }
+        }
+        function NER_fun() {
+            if (document.getElementById('NER').checked == true) {
+                for (item in NER) {
+                    document.getElementById(item).checked = true;
+                }
+            }
+            else {
+                for (item in NER) {
+                    document.getElementById(item).checked = false;
+                }
+            }
+        }
+        function WR_fun() {
+            if (document.getElementById('WR').checked == true) {
+                for (item in WR) {
+                    document.getElementById(item).checked = true;
+                }
+            }
+            else {
+                for (item in WR) {
+                    document.getElementById(item).checked = false;
+                }
+            }
+        }
+        function ER_fun() {
+            if (document.getElementById('ER').checked == true) {
+                for (item in ER) {
+                    document.getElementById(item).checked = true;
+                }
+            }
+            else {
+                for (item in ER) {
+                    document.getElementById(item).checked = false;
+                }
+            }
+        }
+        function SR_fun() {
+            if (document.getElementById('SR').checked == true) {
+                for (item in SR) {
+                    document.getElementById(item).checked = true;
+                }
+            }
+            else {
+                for (item in SR) {
+                    document.getElementById(item).checked = false;
+                }
+            }
+        }
+
+
+
+        function Fetchgenlist() {
+            console.log("Fetchgenlist called");
+
+
+            //***********************************************
+            //              Fetch the Current Date 
+            //***********************************************
+            var current_time = new Date()
+            var date = current_time.getDate()
+            var month = current_time.getMonth() + 1
+            var year = current_time.getFullYear()
+            if (date < 10) {
+                date = '0' + date.toString()
+            }
+            if (month < 10) {
+                month = '0' + month.toString()
+            }
+            date_value = year + '-' + month + '-' + date
+            //console.log(date_value)
+            document.getElementById('calender1').value = date_value
+            document.getElementById('calender2').value = date_value
+            // ***********************************************
+
+
+            $.post('/gen/getAllGens', function (res) {
+                var gens = JSON.parse(res);
+                // console.log(gens);
+                htm = '';
+                htm = htm + '<li value=0><input id="ALL" type="checkbox" onclick="ALL_fun()" />ALL</li>';
+                htm = htm + '<li value=1><input id="ER" type="checkbox" onclick="ER_fun()" />ER</li>';
+                htm = htm + '<li value=2><input id="NER" type="checkbox" onclick="NER_fun()" />NER</li>';
+                htm = htm + '<li value=3><input id="NR" type="checkbox" onclick="NR_fun()" />NR</li>';
+                htm = htm + '<li value=4><input id="SR" type="checkbox" onclick="SR_fun()" />SR</li>';
+                htm = htm + '<li value=5><input id="WR" type="checkbox" onclick="WR_fun()" />WR</li>';
+
+
+                //3-NR,5-WR,4-SR,1-ER,2-NER
+                for (var i = 0; i < gens.length; i++) {
+                    htm = htm + '<li value=' + gens[i]['id'].toString(10) + '><input id="' + gens[i]['name'] + '" type="checkbox" />' + gens[i]['name'] + '</li>';
+
+                    gen_list[gens[i]['name']] = gens[i]['id'];
+                    All_list.push(gens[i]['id']);
+                    temp = gens[i]['id'].toString(10)
+                    // console.log(temp[0])
+                    if (temp[0] == '1') {
+                        ER_list.push(gens[i]['id']);
+                        ER[gens[i]['name']] = gens[i]['id'];
+                    }
+                    else if (temp[0] == '2') {
+                        NER_list.push(gens[i]['id']);
+                        NER[gens[i]['name']] = gens[i]['id'];
+                    }
+                    else if (temp[0] == '3') {
+                        NR_list.push(gens[i]['id']);
+                        NR[gens[i]['name']] = gens[i]['id'];
+                    }
+                    else if (temp[0] == '4') {
+                        SR_list.push(gens[i]['id']);
+                        SR[gens[i]['name']] = gens[i]['id'];
+                    }
+                    else if (temp[0] == '5') {
+                        WR_list.push(gens[i]['id']);
+                        WR[gens[i]['name']] = gens[i]['id'];
+                    }
+                }
+                // console.log(gen_list);
+                // console.log(NR_list);
+                // console.log(WR_list);
+                document.getElementById('generator_data').innerHTML = htm;
+            });
+        }
+
+
+        // var Checked_NR_Station = [];
+        function GeneratorList() {
+            console.log("Checked List called!");
+            Check_list = [];
+
+            // if (document.getElementById('ALL').checked == true) {
+            //     Check_list = All_list;
+            // }
+            // else if (document.getElementById('NER').checked == true) {
+            //     Check_list = NER_list;
+            // }
+            // else if (document.getElementById('ER').checked == true) {
+            //     Check_list = ER_list;
+            // }
+            // else if (document.getElementById('NR').checked == true) {
+            //     Check_list = NR_list;
+            // }
+            // else if (document.getElementById('SR').checked == true) {
+            //     Check_list = SR_list;
+            // }
+            // else if (document.getElementById('WR').checked == true) {
+            //     Check_list = WR_list;
+            // }
+            // else {
+            for (item in gen_list) {
+                if (document.getElementById(item).checked == true) {
+                    Check_list.push(gen_list[item]);
+                }
+            }
+            // }
+            // console.log(Check_list);
+
+        }
+
+
+        function show() {
+
+
+            Number.prototype.round = function (places) {
+                return +(Math.round(this + "e+" + places) + "e-" + places);
+            }
+
+            var from = $("#calender1").datepicker('getDate');
+            var fromDate = document.getElementById("calender1").value;
+            var toDate = document.getElementById("calender2").value;
+            let month_names = ["Jan", "Feb", "Mar",
+                "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep",
+                "Oct", "Nov", "Dec"];
+
+            let monthSelected = month_names[parseInt(fromDate.split("-")[1]) - 1]
+            let yearSelected = parseInt(fromDate.split("-")[0])
+            console.log(fromDate);
+            console.log(toDate);
+            console.log(Check_list);
+
+            $.post("/monthlyreport/getReport", { fromDate: fromDate, toDate: toDate, gens: Check_list }, function (res) {
+                console.log(res)
+                let json = JSON.parse(res)
+                //console.log("VC",json["vc"])
+                //console.log("json",typeof(json))
+                let totalCap = 0;
+                for (let i in Check_list)
+                    totalCap += parseInt(IC[Check_list[i]])
+                let html = ''
+                html += '<table class="table table-bordered"><thead><tr><th colspan="3"><center>SCED REPORT FROM DATE :' + fromDate.split("-").reverse().join("-")+' TO DATE: '+toDate.split("-").reverse().join("-")+'</center></th></tr></thead><tbody>'
+                html += '<tr style="background:lightblue"><td>1.</td><td>Number of plants participating in SCED </td><td>' + Check_list.length + '</td></tr>'
+                html += '<tr style="background:gainsboro"><td>2.</td><td>Total capacity under SCED </td><td>' + totalCap + ' (MW)</td></tr>'
+                html+='<tr style="background:lightblue"><td>3.</td><td>Variable cost range of SCED generators</td><td>Min:'+json['vc'].split(":")[1].split("+")[0]+' paisa/kWh ('+idtoname[json['vc'].split(":")[1].split("+")[1]]+') <br> Max: '+json['vc'].split(":")[0].split("+")[0]+' paisa/kWh ('+idtoname[json['vc'].split(":")[0].split("+")[1]]+')</td></tr>'
+                html += '<tr style="background:gainsboro"><td>4.</td><td>Average schedule under SCED</td><td>' + (json['avgmw']).round(2) + ' (MW)</td></tr>'
+                html += '<tr style="background:lightblue"><td>5.</td><td>Total Variable cost of generation without SCED*</td><td>&#8377;' + (json['pcost']).round(2) + ' Crore (&#8377;'+(json['pcost']/json['days']).round(2)+' Cr/day)</td></tr>'
+                html += '<tr style="background:gainsboro"><td>6.</td><td>Total Variable cost of generation with SCED*</td><td>&#8377;' + (json['ocost']).round(2)+' Crore (&#8377;'+(json['ocost']/json['days']).round(2)+' Cr/day) </td></tr>'
+                html += '<tr style="background:lightblue"><td>7.</td><td>Reduction in total variable cost due to SCED*</td><td> &#8377;' +(json['pcost'] - json['ocost']).round(2) + ' Crore</td></tr>'
+                html += '<tr style="background:gainsboro"><td>8.</td><td>Reduction in average cost of generation due to SCED </td><td>' + json['unit'].round(2) + ' paisa/kWh</td></tr>'
+                html+= '<tr style="background:lightblue"><td>9.</td><td>Average variable cost of generation</td><td>Pre-SCED: ' + json['pc'].round(2) + ' paisa/kWh <br> Post-SCED: '+json['oc'].round(2)+' paisa/kWh</td></tr>'
+                html += '<tr style="background:gainsboro"><td>10.</td><td>Total perturbation caused by SCED (increase/decrease of generation)</td><td>' + parseInt(json['perturbation']) + ' MU</td></tr>'
+                html += '<tr style="background:lightblue"><td>11.</td><td>Average perturbation caused by SCED </td><td>' + parseInt(json['avgpert']) + ' MW </td></tr>'
+                html += '<tr style="background:gainsboro"><td>12.</td><td>Cost reduction per unit perturbed energy </td><td>' + json['uu'].round(2) + ' paisa/kWh</td></tr>'
+                html += '<tr style="background:lightblue"><td>13.</td><td>Average number of generators perturbed per time block</td><td>'+(parseInt(json['up'])+parseInt(json['down']))+' (' + parseInt(json['up']) + 'up & ' + parseInt(json['down']) + 'down)</td></tr>'
+                html += '<tr style="background:gainsboro"><td>14.</td><td>Number of Schedule Changes</td><td>' + parseInt(json['dec']) + ' % Decrease post-SCED </td></tr>'
+                html += '<tr style="background:lightblue"><td>15.</td><td>Cumulative Quantum (MW) of Schedule Changes </td><td>' + parseInt(json['decval']) + ' % Decrease post-SCED </td></tr>'
+                html += '</tbody></table>'
+
+
+                document.getElementById("systemReport").innerHTML = html
+
+let xaxisdata=[]
+let schedule=[]
+
+
+
+
+for(let i=1;i<97;i++){
+    xaxisdata.push(i)
+    schedule.push(json['scho'][i-1].round(2))
+}
+
+                  Highcharts.chart('graph', {
+
+    chart: {
+        type: 'area',
+         zoomType: 'xy'
+    }, legend: {
+     
+              itemStyle: {
+                 color: '#000000'
+              }
+
+        }, yAxis: {
+       
+        title: {
+
+            text: 'MW'
+        }
+    },
+    title: {
+        text:'SCED SCHEDULE',
+        align:'high'
+    },
+    xAxis: {
+        categories:xaxisdata,
+            labels: {
+            style: {
+                color:'#000000'
+            }
+        },
+        
+    },
+    
+    credits: {
+        enabled: false
+    },
+    series: [  
+   
+    {
+      name:'SCED SCHEDULE',
+      data:schedule,
+      color:'#AA0000'
+    }
+    ]
+});
+
+
+
+                // console.log(IC)
+            })
+
+
+
+        }
+
+
+    </script>
+
+    <div class="row">
+
+        <div class="col-lg-3">
+            <label for="calender1">FROM DATE</label>
+            <input type="date" class="form-control" id="calender1">
+        </div>
+
+        <div class="col-lg-3">
+            <label for="calender2">TO DATE</label>
+            <input type="date" class="form-control" id="calender2">
+        </div>
+
+        <div class="col-lg-3" style="margin-right: 0px;">
+            <!-- <label>Generators</label> -->
+            <button type="button" class="btn"
+                style="width: 100%;background-color:#E0E0E0; color: black;margin-top: 34px;" data-toggle="modal"
+                data-target="#NRModal">
+                Generators
+            </button>
+
+            <!-- Modal -->
+            <div class="modal fade" id="NRModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <!-- <h5 class="modal-title" id="exampleModalLabel">Generators</h5> -->
+                            <!-- <hr> -->
+                            <button type="button" style="width: 100%;background-color: #616161;color: white;"
+                                class="btn" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn"
+                                style="width: 100%;background-color: #448AFF;color: white;"
+                                onclick="GeneratorList()">Save changes</button>
+                        </div>
+                        <div class="modal-body" id="generator_data">
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" style="width: 100%;background-color: #616161;color: white;"
+                                class="btn" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn"
+                                style="width: 100%;background-color: #448AFF;color: white;"
+                                onclick="GeneratorList()">Save changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-lg-3">
+            <label for="show">EDIT</label>
+            <button class="btn btn-outline-primary form-control" id="show" onclick="show()">SHOW</button>
+        </div>
+
+    </div>
+    <div class="row " id="systemReport"></div>
+    <div class="row" id="graph"></div>
+    <!-- <div class="row">
+        <div id="chart_div1" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+        <div id="chart_div2" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+    </div>
+    <div class="row">
+        <div id="chart_div3" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+        <div id="chart_div4" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+    </div>
+    <div class="row">
+        <div id="chart_div5" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+        <div id="chart_div6" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+    </div>
+    <div class="row">
+        <div id="chart_div7" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+
+    </div> -->
+
+
+</body>
+
+</html>

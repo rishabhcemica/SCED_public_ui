@@ -1,0 +1,53 @@
+<html>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<body>
+	<img src="/images/posoco.png" id="header">
+	
+	<form action='/attempt' method='POST' id='form' style='float:left; height:250px; background: cornflowerblue; padding: 20px'>
+		<h2>Login</h2>
+		<div id='notice' style="display:none"><%=notice%></div>
+	<table>
+		<tr>
+			<th>Username</th>
+			<td><input type='text' name="username"></td>
+		</tr>
+		<tr>
+			<th>Password</th>
+			<td><input type='password' name="password"></td>
+		</tr>
+	</table>
+	<div class="g-recaptcha" data-sitekey="6LdTtusUAAAAAF1D38DK7SUQnCFmGBabujVlX5sa"></div>
+	<input type='submit' value="Login">
+	</form>
+	<script
+  src="https://code.jquery.com/jquery-3.6.0.min.js"
+  integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+  crossorigin="anonymous"></script>
+	<script>
+		$(document).ready(function(){
+			//alert('ready');
+			screen=$(window).width();
+			$("#header").css("width","100%");
+			//alert(screen);
+			formWidth=$("#form").width();
+			side=(screen-formWidth)/2;
+			//alert(side);
+			$("#form").css("margin-left",side+'px')
+			//alert(side+'px');
+			notice=$("#notice").html();
+			//alert(notice);
+			if(notice!=''){
+				$('#notice').show();
+				if(notice=='Logged Out'){
+					$("#notice").css("background","green");
+					$("#notice").css("padding","5px");
+				}
+				else{
+					$("#notice").css("background","red");
+					$("#notice").css("padding","5px");	
+				}
+			}
+		});
+	</script>
+</body>
+</html>

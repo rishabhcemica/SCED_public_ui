@@ -1,0 +1,198 @@
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script type="text/javascript">
+
+    var selectedDate = '';
+    var tdate = '';
+    var chartdata;
+    var selectedGenerator;
+    // $(function () {
+    //     $("#calender1").datepicker({ dateFormat: "dd-mm-yy" });
+    //     $("#calender2").datepicker({ dateFormat: "dd-mm-yy" });
+
+    //     var today = new Date();
+    //     var dd = today.getDate();
+    //     var mm = today.getMonth() + 1; //January is 0!
+
+    //     var yyyy = today.getFullYear();
+    //     if (dd < 10) {
+    //         dd = '0' + dd;
+    //     }
+    //     if (mm < 10) {
+    //         mm = '0' + mm;
+    //     }
+    //     var today = dd + '-' + mm + '-' + yyyy;
+    //     htm = '';
+    //     htm += '<option value="0">ALL</option>';
+    //     htm += '<option value="1">NER</option>';
+    //     htm += '<option value="4">SR</option>';
+    //     htm += '<option value="5">WR</option>';
+    //     htm += '<option value="2">ER</option>';
+    //     htm += '<option value="3">NR</option>';
+
+    //     document.getElementById("calender1").value = today;
+    //     document.getElementById("calender2").value = today;
+
+    //     document.getElementById('dropdown').innerHTML = htm;
+
+    // });
+
+    function showOpt() {
+        // selectedDate = document.getElementById("calender1").value;
+
+
+        // // start time and end time
+        // var startTime = moment("12:16:59 AM", "HH:mm:ss a");
+        // var endTime = moment("06:12:07 PM", "HH:mm:ss a");
+
+        // // calculate total duration
+        // var duration = moment.duration(endTime.diff(startTime));
+
+        // // duration in hours
+        // var hours = parseInt(duration.asHours());
+
+        // // duration in minutes
+        // var minutes = parseInt(duration.asMinutes()) % 60;
+        // var second = parseInt(duration.asSeconds()) % 60;
+        // console.log(second);
+        var startTime;
+        var endTime;
+        var duration;
+        var hours;
+        var minutes;
+        var second;
+
+
+
+
+
+        var fromDate = document.getElementById("calender1").value;
+        var toDate = document.getElementById("calender2").value;
+        //console.log(fromDate);
+        //console.log(toDate);
+
+
+
+        var selectedGen = $("#dropdown").val();
+        $.post('/gen/diagnostics', { fromDate: fromDate, toDate: toDate }, function (res) {
+
+            chartdata = JSON.parse(res);
+
+
+            console.log(chartdata[0]);
+            text = '';
+            for (var i = 0; i < chartdata.length; i++) {
+                try {
+                    startTime = moment(chartdata[i]['sr_sttime'].split(' at ')[1], "HH:mm:ss a");
+                    cjsonEtime = ((chartdata[i]['cjsonetime']).toString(10)).split(' at ')[1];
+                    endTime = moment(cjsonEtime, "HH:mm:ss a");
+                    duration = moment.duration(endTime.diff(startTime));
+                    hours = parseInt(duration.asHours());
+                    minutes = parseInt(duration.asMinutes()) % 60;
+                    second = parseInt(duration.asSeconds()) % 60;
+                }
+                catch {
+                    second = 0;
+
+                }
+                // console.log(cjsonEtime);
+                if (i >= 1 && (chartdata[i]['wbes_rev'] == chartdata[i - 1]['wbes_rev'])) {
+                    text = text + '<tr style="color:red;font-weight:bold">';
+                }
+                else {
+                    text = text + '<tr style="font-weight:bold">';
+                }
+
+                try {
+
+                    text = text + '<td>' + chartdata[i]['id'].split(':')[0] + '</td>';
+                    text = text + '<td>' + chartdata[i]['id'].split(':')[1] + '</td>';
+
+                    text = text + '<td>' + chartdata[i]['sr_sttime'].split(' at ')[1] + '</td>';
+                    text = text + '<td>' + chartdata[i]['sr_etime'].split(' at ')[1] + '</td>';
+                    text = text + '<td>' + chartdata[i]['sr_etime'].split(' at ')[1] + '</td>';
+                    text = text + '<td>' + chartdata[i]['cjsonstime'].split(' at ')[1] + '</td>';
+                    text = text + '<td>' + chartdata[i]['cjsonetime'].split(' at ')[1] + '</td>';
+                    text = text + '<td>' + chartdata[i]['wbes_rev'] + '</td>';
+                    text = text + '<td>' + chartdata[i]['wbes_time'].split("T")[0].split("-").reverse().join("-")+" "+chartdata[i]['wbes_time'].split("T")[1].substring(0,8)+ '</td>';
+                    // text = text + '<td>' + 'Test' + '</td>';
+                    text = text + '<td>' + second + '</td>';
+                    text = text + '</tr>';
+                } catch (error) {
+
+                    text = text + '<td></td>';
+                    text = text + '<td></td>';
+
+                    text = text + '<td></td>';
+                    text = text + '<td></td>';
+                    text = text + '<td></td>';
+                    text = text + '<td></td>';
+                    text = text + '<td></td>';
+                    text = text + '<td></td>';
+                    text = text + '<td></td>';
+                    // text = text + '<td>' + 'Test' + '</td>';
+                    text = text + '<td>' + second + '</td>';
+                    text = text + '</tr>';
+
+                }
+
+            }
+            // console.log(text);
+            document.getElementById("DTbody").innerHTML = text;
+
+        });
+
+    }
+</script>
+
+
+<div class="row">
+
+    <div class="col-lg-3">
+        <label for="calender1">FROM DATE:</label>
+        <input type="date" class="form-control" id="calender1">
+    </div>
+    <div class="col-lg-3">
+        <label for="calender1">TO DATE:</label>
+        <input type="date" class="form-control" id="calender2">
+    </div>
+
+    <div class="col-lg-2">
+        <label>submit</label>
+        <button class="btn btn-outline-primary form-control" onclick="showOpt()">submit</button>
+    </div>
+</div>
+<br>
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th id="date" scope="col">For Date</th>
+                <th id="fblock" scope="col">Block</th>
+
+                <th id="Srtime" scope="col">Input STime</th>
+                <th id="Srtime" scope="col">Input ETime</th>
+                <th id="Gttime" scope="col">GAMS STime</th>
+                <th id="Cjtime" scope="col">Output STime</th>
+                <th id="Cjtime" scope="col">Output ETime</th>
+                <th id="WrevNo" scope="col">WBES Rev_No.</th>
+                <th id="WSRtime" scope="col">WBES Rev_Time</th>
+                <!-- <th id="Owritten" scope="col">Output Written</th> -->
+                <th id="TEtime" scope="col">Total Time (In Sec)</th>
+            </tr>
+        </thead>
+        <tbody id="DTbody">
+
+        </tbody>
+    </table>
+</div>
+<!-- <div id="chart_div" style="width: 100%; height: 500px;"></div>
+<div id="chart_div1" style="width: 100%; height: 500px;"></div>
+<div class="row">
+    <div class="col-lg-4" id="pre"></div>
+    <div class="col-lg-4" id="post"></div>
+</div>
+<div id="chart_div2" style="width: 100%; height: 500px;"></div> -->

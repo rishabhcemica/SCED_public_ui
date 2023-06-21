@@ -1,0 +1,1382 @@
+
+<!--   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script> -->
+ <!--  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script> -->
+
+
+<script type="text/javascript">
+  setTimeout(function(){
+    location = 'https://scedpublic.posoco.in'
+  },180000);
+</script>
+
+<style type="text/css">
+div#outputTable {
+    background: bisque;
+}
+div#alertTable {
+    background: bisque;
+}
+div#atcdetail {
+    background: bisque;
+}
+  table#atct {
+    margin-top: 40%;
+        background: bisque;
+}
+table#SMP {
+    background: bisque;
+}
+/*body{
+  font-family: 'Montserrat', sans-serif;
+  -webkit-font-smoothing: antialiased;
+ /* background: #E7E7E7;*/
+/* background: #EEEEEE;*/
+ /* padding: 30px 60px;
+}*/
+
+h1{
+  text-align: center;
+}
+
+//alert
+.alert {
+  min-width: 150px;
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  @extend .shadow-1;
+  &:hover{
+    @extend .shadow-2;
+  }
+  &-success{
+    background-color: lighten(#5cb85c, 15%);
+    border-color: lighten(#5cb85c, 10%);
+    color: darken(#5cb85c, 15%);
+  }
+  &-warning{
+    background-color: lighten(#E2A41F, 15%);
+    border-color: lighten(#E2A41F, 10%);
+    color: darken(#E2A41F, 15%);
+  }
+  &-danger{
+    background-color: lighten(#d43f3a, 15%);
+    border-color: lighten(#d43f3a, 10%);
+    color: darken(#d43f3a, 15%);
+  }
+  p{
+    padding: 0;
+    margin: 0;
+  }
+  i{
+    padding-right: 5px;
+    vertical-align: middle;
+    font-size: 24px;
+  }
+  .close-alert{
+    -webkit-appearance: none;
+    position: relative;
+    float: right;
+    padding: 0;
+    border: 0;
+    cursor: pointer;
+    color: inherit;
+    background: 0 0;
+    font-size: 21px;
+    line-height: 1;
+    font-weight: bold;
+    text-shadow: 0 1px 0 rgba(255,255,255,.7);
+    filter: alpha(opacity=40);
+    opacity: .4;
+    &:hover{
+      filter: alpha(opacity=70);
+      opacity: .7;
+    }
+  }
+}
+
+.shadow-1{
+  box-shadow: 0 1px 3px rgba(#000, .12), 0 1px 2px rgba(#000, .24) ;
+}
+.shadow-2{
+  box-shadow: 0 3px 6px rgba(#000, .16), 0 3px 6px rgba(#000, .23) ;
+}
+
+#emergencyCheckbox{
+  margin: 20px;
+  font-size: 20px;
+  justify-content: center;
+}
+#StartStop{
+  margin-left: 20px;
+}
+tr,td,th{
+  border: 1px solid green;
+  padding: 3px;
+}
+#ATCdetail{
+  border: 1px solid green;
+}
+
+</style>
+
+
+<div id="dashboard" class="row" >
+<!-- <div class="col-lg-2  offset-lg-0.5" id="atcdetail">
+</div> -->
+<!-- 
+<div class="col-lg-2  offset-lg-0.5">
+
+  <p><b>Fill the Import/Export ATC details to be incorporated in SCED</b></p>
+  <table style="width: 100%;" class="alert alert-success">
+    <thead>
+      <tr>
+        <th>Region</th>
+        <th>Import ATC(MW)</th>
+        <th>Export ATC(MW)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>NR</b></td>
+        <td><input type="text" class="form-control" name="NR" id="NRimport" value=""></td>
+        <td><input type="text" class="form-control" name="NR" id="NRexport" value=""></td>
+      </tr>
+      <tr>
+        <td><b>WR</b></td>
+        <td><input type="text" class="form-control" name="WR" id="WRimport" value=""></td>
+        <td><input type="text" class="form-control" name="WR" id="WRexport" value=""></td>
+      </tr>
+      <tr>
+        <td><b>SR</b></td>
+        <td><input type="text" class="form-control" name="SR" id="SRimport" value=""></td>
+        <td><input type="text" class="form-control" name="SR" id="SRexport" value=""></td>
+      </tr>
+      <tr>
+        <td><b>ER</b></td>
+        <td><input type="text" class="form-control" name="ER" id="ERimport" value=""></td>
+        <td><input type="text" class="form-control" name="ER" id="ERexport" value=""></td>
+      </tr>
+      <tr>
+        <td><b>NER</b></td>
+        <td><input type="text" class="form-control" name="NER" id="NERimport" value=""></td>
+        <td><input type="text" class="form-control" name="NER" id="NERexport" value=""></td>
+      </tr>
+    </tbody>
+  </table>
+  <button style="margin:2px; float:right;" type="button" class="btn btn-success" onclick="AtcImportExport()">Save ATC</button>
+</div> -->
+
+<div class="col-lg-2 ">
+  <p><h3>Schedule Data</h3></p>
+  <div id="alertTable">
+
+  </div>
+
+</div>
+
+<div class="col-lg-2 ">
+    <p><h3>Output</h3></p>
+  <div id="outputTable" style="
+    margin-top: 17%;
+">
+
+  </div>
+
+</div>
+
+<div class="col-lg-2 ">
+    <p><h3>Application</h3></p>
+  <div id="appStatus">
+
+  </div>
+
+</div>
+
+<div class="col-lg-2 ">
+    <p><h3>Core Engine</h3></p>
+  <div id="engineStatus" style="margin-top: 17%;">
+  </div>
+
+</div>
+
+<br><br><br><br>
+<div id="btns" class="col-lg-2">
+<div class="row">
+ <!--    <button id="StartStop" type="button" class="btn btn-success btn-lg" onclick="startSCED()"><b> &nbsp;&nbsp;&nbsp; Start SCED&nbsp;&nbsp;&nbsp;  </b></button> -->
+
+
+
+
+  </div>
+<br>
+  <div class="row">
+    
+   <!--  <button id="StartStop" type="button" class="btn btn-danger btn-lg" style="background-color:orange" onclick="stopSCED()"><b>Scheduled Stop</b></button> -->
+</div>
+<!----------------------------------------------------------------------------------------------------------------------
+  ------------------------------------------------------------------------------------------------------------------------>
+<!--  Code for emergency stop -->
+<br>
+<div class="row">
+    <div>
+     <!--  <button id="StartStop" type="button" class="btn btn-danger btn-lg" data-toggle="modal" data-target="#emergencyStop" onclick="fetchEmergency()"><b>Emergency Stop</b></button> -->
+
+      <div class="modal fade" id="emergencyStop" role="dialog" style="padding:20px;">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+
+            <div class="modal-header">
+              <b>RRAS and SCED will become zero from next run. Please select region for emergency stop:</b>
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <div id="emerSelectRegion">
+
+              <div class="checkbox" style="text-align: center;margin-top: 20px;margin-bottom: 20px;">
+                <label id="emergencyCheckbox"><input id="NRcheck" type="checkbox" value="">&nbsp;&nbsp;<b>NR</b></label>
+                <label id="emergencyCheckbox"><input id="WRcheck" type="checkbox" value="">&nbsp;&nbsp;<b>WR</b></label>
+                <label id="emergencyCheckbox"><input id="SRcheck" type="checkbox" value="">&nbsp;&nbsp;<b>SR</b></label>
+                <label id="emergencyCheckbox"><input id="ERcheck" type="checkbox" value="">&nbsp;&nbsp;<b>ER</b></label>
+                <label id="emergencyCheckbox"><input id="NERcheck" type="checkbox" value="">&nbsp;&nbsp;<b>NER</b></label>
+                  <label id="emergencyCheckbox"><input id="ALLcheck" type="checkbox" value="" onclick="allChecked(this)">&nbsp;&nbsp;<b>ALL</b></label>
+              </div>
+
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn btn-dark" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-success" onclick="emergencystop()">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+<!--  Code for emergency stop -->
+<!----------------------------------------------------------------------------------------------------------------------
+  ------------------------------------------------------------------------------------------------------------------------>
+
+</div>
+</div>
+<br><br>
+<div class="row">
+<div class="col-lg-4" id="chart_div" style="min-height: 400px;">
+
+</div>
+<div class="col-lg-4" id="chart_div1" style="min-height: 400px;">
+
+</div>
+
+<div class="col-lg-4" id="chart_div2" style="min-height: 400px;">
+
+</div>
+
+</div>
+
+<div class="row">
+<div class="col-lg-4" id="chart_cumm">
+
+</div>
+<div class="col-lg-4" id="chart_cumm1" >
+
+</div>
+
+<div class="col-lg-4" id="chart_cumm2">
+
+</div>
+
+
+</div>
+
+<div class="row">
+<div class="col-lg-3" id="chart_divATC" style="min-height: 500px;">
+
+</div>
+<div class="col-lg-3" id="chart_divATCSR" style="min-height: 500px;">
+
+</div>
+
+<div class="col-lg-3" id="chart_divATCNER" style="min-height: 500px;">
+
+</div>
+
+<div class="col-lg-3" id="atcTable" style="min-height:100px;">
+
+</div>
+
+
+</div>
+
+<!-- <div class="row">
+<div class="col-lg-4" id="chart_div3" style="min-height: 400px;">
+
+</div>
+<div class="col-lg-4" id="chart_div4" style="min-height: 400px;">
+
+</div>
+
+<div class="col-lg-4" id="chart_div5" style="min-height: 400px;">
+
+</div>
+
+</div> -->
+<!----------------------------------------------------------------------------------------------------------------------
+  ------------------------------------------------------------------------------------------------------------------------>
+<!----- code for ATC details -------------------------->
+<script type="text/javascript">
+
+function allChecked(cb){
+
+if(cb.checked){
+
+  $("#NRcheck").prop("checked", true);
+  $("#WRcheck").prop("checked", true);
+  $("#ERcheck").prop("checked", true);
+  $("#SRcheck").prop("checked", true);
+  $("#NERcheck").prop("checked", true);
+
+}else{
+$("#NRcheck").prop("checked", false);
+  $("#WRcheck").prop("checked", false);
+  $("#ERcheck").prop("checked", false);
+  $("#SRcheck").prop("checked", false);
+  $("#NERcheck").prop("checked", false);
+
+
+}
+
+}
+
+  function AtcImportExport(){
+    var NRimport = document.getElementById("NRimport").value;
+    var NRexport = document.getElementById("NRexport").value;
+    var WRimport = document.getElementById("WRimport").value;
+    var WRexport = document.getElementById("WRexport").value;
+    var SRimport = document.getElementById("SRimport").value;
+    var SRexport = document.getElementById("SRexport").value;
+    var ERimport = document.getElementById("ERimport").value;
+    var ERexport = document.getElementById("ERexport").value;
+    var NERimport = document.getElementById("NERimport").value;
+    var NERexport = document.getElementById("NERexport").value;
+
+    //console.log(NRimport,NRexport,WRimport,WRexport,SRimport,SRexport,ERimport,ERexport,NERimport,NERexport);
+
+if(confirm("Are you sure you want to save ATC values for SCED optimization in next run?"))
+       {
+        // var atcnr=document.getElementById('atcnr').value;
+        // var atcsr=document.getElementById('atcsr').value;
+        // var atcner=document.getElementById('atcner').value;
+
+        //   var atcnrE=document.getElementById('atcnrE').value;
+        // var atcsrE=document.getElementById('atcsrE').value;
+        // var atcnerE=document.getElementById('atcnerE').value;
+
+        $.post('/atcdetails/putATC',{atcnr:NRimport,atcsr:SRimport,atcner:NERimport,atcnrE:NRexport,atcsrE:SRexport,atcnerE:NERexport,
+          atcwr:WRimport,atcwrE:WRexport,atcer:ERimport,atcerE:ERexport},function(res){
+
+
+        });
+                   
+       }else{
+
+        console.log("cancel");
+       }
+
+  }
+</script>
+
+
+
+<!----------------------------------------------------------------------------------------------------------------------
+  ------------------------------------------------------------------------------------------------------------------------>
+<!----- code for Emergency stop -------------------------->
+
+<script type="text/javascript">
+
+function fetchEmergency(){
+
+$.get('/exclude/getEmerStop',function(res){
+
+  res= JSON.parse(res)
+
+  $("#NRcheck").prop("checked", res[2]=="1"?true:false);
+  $("#WRcheck").prop("checked", res[4]=="1"?true:false);
+  $("#ERcheck").prop("checked", res[0]=="1"?true:false);
+  $("#SRcheck").prop("checked", res[3]=="1"?true:false);
+  $("#NERcheck").prop("checked", res[1]=="1"?true:false);
+
+  if(res[2]=="1" && res[4]=="1" && res[3]=="1" && res[1]=="1" && res[0]=="1"){
+    $("#ALLcheck").prop("checked", true);
+  }else{
+  $("#ALLcheck").prop("checked", false);
+
+  }
+
+});
+
+
+
+}
+
+  function emergencystop(){
+    console.log("in estop")
+    var NR = document.getElementById("NRcheck");
+    var WR = document.getElementById("WRcheck");
+    var SR = document.getElementById("SRcheck");
+    var ER = document.getElementById("ERcheck");
+    var NER = document.getElementById("NERcheck");
+    var nr = 0,wr = 0,sr = 0,er = 0,ner = 0;
+
+    if (NR.checked == true){ nr = 1}
+    if (WR.checked == true){ wr = 1}
+    if (SR.checked == true){ sr = 1}
+    if (ER.checked == true){ er = 1}
+    if (NER.checked == true){ ner = 1}
+
+    console.log("NR",nr);
+    console.log("WR",wr);
+    console.log("SR",sr);
+    console.log("ER",er);
+    console.log("NER",ner);
+
+    $.post("/exclude/putEmergency",{data:[er,ner,nr,sr,wr]},function(res){
+
+
+     if(res){
+      alert("submitted successfully")
+     }
+
+    })
+
+    console.log("Emergency Stop button called!");
+  }
+</script>
+<!----- code for Emergency stop -------------------------->
+<!----------------------------------------------------------------------------------------------------------------------
+  ------------------------------------------------------------------------------------------------------------------------>
+
+
+
+
+
+
+
+
+
+
+
+  <script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <script type="text/javascript">
+    var schNR=-1;
+    var optNR=-1;
+    var schER=-1;
+    var optER=-1;
+    var schNER=-1;
+    var optNER=-1;
+    var schSR=-1;
+    var optSR=-1;
+    var schWR=-1;
+    var optWR=-1;
+    var final1;
+    var final2;
+    var atcf;
+    var atcfsr;
+    var atcfar;
+    var optatcsr=0;
+    var optatcnr=0;
+    var optatcner=0;
+     var optatcsrE=0;
+    var optatcnrE=0;
+    var optatcnerE=0;
+    var outputFeasibility=0;
+        
+      var curr_date=new Date();
+         curr_date.setHours(curr_date.getHours()+5);
+        curr_date.setMinutes(curr_date.getMinutes()+30);
+       curr_date= curr_date.toISOString().slice(0,10);
+var curr_date1=new Date();
+        var hh=curr_date1.getHours();
+        var mm=curr_date1.getMinutes();
+     curr_date=curr_date.split("-").reverse().join("-");
+     var curr_block=Math.ceil(hh*4)+Math.ceil(mm/15.0);
+     var predictedBlock=curr_block+2;
+     if(curr_block==95){
+      predictedBlock=1;
+
+     }
+     if(curr_block==96){
+      predictedBlock=2;
+     }
+      var selectedDate=curr_date;
+
+var chartdata=[];
+var chartdataSMP;
+     // selectedDate=document.getElementById("calender1").value;
+var selectedGen="ALL";
+$.get('/excludedgen/getexcludedgen',function(res){
+var ex=JSON.parse(res);
+var ll=ex.length;
+$.post('/GenRates/getCurtailment',{date:selectedDate},function(res){
+  var rldcex=JSON.parse(res);
+  //console.log(rldcex);
+var rldc=[];
+var nldc=[];
+for (var key in rldcex) {
+    if (rldcex.hasOwnProperty(key)) {
+         if(parseInt(rldcex[key]['CUR'].split(",")[predictedBlock-1])==1){
+rldc.push(key);
+         }
+    }
+}
+for(var u=0;u<ex.length;u++){
+nldc.push(ex[u]);
+}
+
+var htm4='';
+var htmNLDC='';
+var htmRLDC='';
+console.log(ll);
+if(ll==54){
+htm4+='<div class="alert alert-danger" role="alert"><h4>Stopped</h4></div>';
+}else{
+htm4+='<div class="alert alert-success" role="alert"><h4>Running</h4></div>';
+}
+htmNLDC+="<div><h3>NLDC Excluded Generators</h3></div><div><h4>";
+for(var u=0;u<nldc.length;u++){
+  htmNLDC+=idtoname[nldc[u]]+" ";
+}
+htmNLDC+="</h4></div>";
+
+htmRLDC+="<div><h3>RLDC Excluded Generators</h3></div><div>";
+for(var u=0;u<rldc.length;u++){
+  htmRLDC+=idtoname[rldc[u]]+" ";
+}
+htmRLDC+="</div>";
+
+
+document.getElementById('appStatus').innerHTML=htm4;
+});
+});
+
+   $.post('/gamsdata/getTodayData',{selectedDate:selectedDate,selectedGen:"AR"},function(res){
+
+var ardata=JSON.parse(res);
+
+    $.post('/gamsdata/getTodayData',{selectedDate:selectedDate,selectedGen:"NR"},function(res){
+
+var nrdata=JSON.parse(res);
+
+    $.post('/gamsdata/getTodayData',{selectedDate:selectedDate,selectedGen:"SR"},function(res){
+
+var srdata=JSON.parse(res);
+//console.log(srdata);
+$.get('/atcdetails/atcir',function(res){
+
+
+
+var atcvalues=JSON.parse(res);
+console.log(atcvalues)
+//console.log(atcvalues["South-East"]["South-East"]);
+var se=atcvalues["South-East"]["South-East"]["SCHIR"].split(",");
+var sw=atcvalues["South-West"]["South-West"]["SCHIR"].split(",");
+var esatc=atcvalues["East-South"]["East-South"]["ATC"].split(",");
+var wsatc=atcvalues["West-South"]["West-South"]["ATC"].split(",");
+
+var sratce = atcvalues["SR_Export"]["ATC"].split(",")
+
+var SRATCI = atcvalues["SR_Import"]["ATC"].split(",")
+
+var SRIR=[];
+
+for(var i=0;i<se.length;i++){
+
+var cum=0;
+if(typeof(srdata[i+1])!="undefined"){
+cum=srdata[i+1][2]-srdata[i+1][1];
+}
+ 
+
+
+   
+
+
+   SRIR.push(parseInt(se[i])+parseInt(sw[i])+cum);
+ 
+}
+
+
+var SRATC=[];
+var SRATCE=[]
+var srflages=parseInt(esatc[predictedBlock-1]);
+var srflagws=parseInt(wsatc[predictedBlock-1]);
+for(var i=0;i<se.length;i++){
+ // selectedDate=document.getElementById("calender1").value;
+
+
+
+SRATC.push(parseInt(esatc[i])+parseInt(wsatc[i]));
+SRATCE.push(-1*parseInt(sratce[i]))
+}
+
+
+var en=atcvalues["East-North"]["East-North"]["SCHIR"].split(",");
+var wn=atcvalues["West-North"]["West-North"]["SCHIR"].split(",");
+var enatc=atcvalues["East-North"]["East-North"]["ATC"].split(",");
+var wnatc=atcvalues["West-North"]["West-North"]["ATC"].split(",");
+var nratce = atcvalues["NR_Export"]["ATC"].split(",")
+
+var nratc = atcvalues["NR_Import"]["ATC"].split(",")
+
+var NRIR=[];
+
+for(var i=0;i<se.length;i++){
+
+var cum=0;
+if(typeof(srdata[i+1])!="undefined"){
+cum=nrdata[i+1][2]-nrdata[i+1][1];
+}
+
+  NRIR.push(parseInt(en[i])+parseInt(wn[i])+cum);
+}
+
+
+var NRATC=[];
+var NRATCE=[]
+
+var nrflagwn=parseInt(parseInt(wnatc[predictedBlock-1])/0.7);
+
+for(var i=0;i<en.length;i++){
+  NRATC.push(parseInt(nratc[i]));
+  NRATCE.push(-1*parseInt(nratce[i]))
+}
+
+var ene=atcvalues["East-North East"]["East-North East"]["SCHIR"].split(",");
+var eneatc=atcvalues["East-North East"]["East-North East"]["ATC"].split(",");
+var neratce= atcvalues["NER_Export"]["ATC"].split(",")
+var NERATC=[];
+var NERATCE=[]
+var NERIR=[];
+
+var nerflagene=parseInt(eneatc[predictedBlock-1]);
+for(var i=0;i<en.length;i++){
+  NERATC.push(parseInt(eneatc[i]));
+  NERATCE.push(-1*parseInt(neratce[i]));
+}
+for(var i=0;i<se.length;i++){
+ 
+var cum=0;
+if(typeof(srdata[i+1])!="undefined"){
+cum=ardata[i+1][2]-ardata[i+1][1];
+}
+
+  NERIR.push(parseInt(ene[i])+cum);
+}
+
+//console.log(SRATC);
+$.get('/atcdetails/getATC',function(res){
+  var opearatorATC=JSON.parse(res);
+  $.post('/atcdetails/sendMessage',{es:srflages,ws:srflagws,ne:nerflagene,nr:nrflagwn},function(res){
+
+   
+  if(opearatorATC[0]!="undefined"){
+    if(opearatorATC[0]['atcn']!=''){
+  optatcnr=parseInt(opearatorATC[0]['atcn']);
+    }
+      if(opearatorATC[0]['atcne']!=''){
+        optatcner=parseInt(opearatorATC[0]['atcne']);
+      
+    }
+
+      if(opearatorATC[0]['atcs']!=''){
+        optatcsr=parseInt(opearatorATC[0]['atcs']);
+      
+    }
+
+          if(opearatorATC[0]['atcnE']!=''){
+  optatcnrE=parseInt(opearatorATC[0]['atcnE']);
+    }
+      if(opearatorATC[0]['atcneE']!=''){
+        optatcnerE=parseInt(opearatorATC[0]['atcneE']);
+      
+    }
+
+      if(opearatorATC[0]['atcsE']!=''){
+        optatcsrE=parseInt(opearatorATC[0]['atcsE']);
+      
+    }
+
+
+  }
+var finalatc=[];
+var finalatc1=[];
+var finalatc2=[];
+
+var tt=[];
+var tt1=[];
+var tt2=[];
+tt.push("block");
+tt.push("NR ATC Import");
+tt.push("NR ATC   Export");
+tt.push("NR IR");
+tt.push("NLDC entered NR ATC");
+
+tt1.push("block");
+tt1.push("SR ATC Import");
+tt1.push("SR ATC Export");
+tt1.push("SR IR");
+tt1.push("NLDC entered SR ATC");
+
+tt2.push("block");
+tt2.push("NER ATC Import");
+tt2.push("NER ATC Export");
+tt2.push("NER IR");
+tt2.push("NLDC entered NER ATC");
+
+
+finalatc.push(tt);
+
+finalatc1.push(tt1);
+
+finalatc2.push(tt2);
+
+for(var i=1;i<96;i++){
+var temp=[];
+var temp1=[];
+var temp2=[];
+
+temp.push((i).toString());
+temp.push(NRATC[i-1]);
+temp.push(NRATCE[i-1]);
+temp.push(NRIR[i-1]);
+temp.push(optatcnr);
+
+temp1.push((i).toString());
+temp1.push(SRATC[i-1]);
+temp1.push(SRATCE[i-1]);
+temp1.push(-1*SRIR[i-1]);
+temp1.push(optatcsr)
+
+temp2.push((i).toString());
+temp2.push(NERATC[i-1]);
+temp2.push(NERATCE[i-1]);
+temp2.push(NERIR[i-1]);
+temp2.push(optatcner);
+
+
+finalatc.push(temp);
+finalatc1.push(temp1);
+finalatc2.push(temp2);
+
+}
+
+atcf=finalatc;
+atcfsr=finalatc1;
+atcfar=finalatc2;
+
+   google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChartATC);
+      google.charts.setOnLoadCallback(drawChartATCSR);
+
+      google.charts.setOnLoadCallback(drawChartATCNER);
+
+     //console.log(SRIR);
+
+var htm3='';
+htm3+="<div><table class='table table-bordered' id='atct'><thead><tr><th colspan='6'><h4>ATC and IR Schedule for Current Optimization</h4></th></tr>";
+ htm3+="<tr><th>Region</th><th>ATC Imp</th><th>ATC Exp</th><th>SCH IR</th><th>USER ATC Imp</th><th>USER ATC Exp</th></thead></tr><tbody>";
+htm3+="<tr><td>NR</td><td>"+parseInt(NRATC[predictedBlock-1]).toString()+"</td><td>"+parseInt(NRATCE[predictedBlock-1]).toString()+"</td><td>"+parseInt(NRIR[predictedBlock-1])+"</td><td>"+optatcnr.toString()+"</td><td>"+optatcnrE.toString()+"</td></tr>";
+htm3+="<tr><td>SR</td><td>"+parseInt(SRATCI[predictedBlock-1]).toString()+"</td><td>"+parseInt(SRATCE[predictedBlock-1]).toString()+"</td><td>"+(-1*parseInt(SRIR[predictedBlock-1])).toString()+"</td><td>"+optatcsr.toString()+"</td><td>"+optatcsrE.toString()+"</td></tr>";
+htm3+="<tr><td>NER</td><td>"+NERATC[predictedBlock-1].toString()+"</td><td>"+NERATCE[predictedBlock-1].toString()+"</td><td>"+parseInt(NERIR[predictedBlock-1])+"</td><td>"+optatcner.toString()+"</td><td>"+optatcnerE.toString()+"</td></tr>";
+htm3+="</tbody></table>";
+document.getElementById('atcTable').innerHTML=htm3;
+
+
+
+});
+
+
+    });
+   });
+
+});
+});
+});
+
+$.get('/atcdetails/getATC',function(res){
+
+var atc=JSON.parse(res);
+
+if(typeof(atc[0])=="undefined"){
+  atc=[{'atcn':'','actnE':'','atcs':'','atcsE':'','atcw':'','atcwE':'','atce':'','atceE':'','atcne':'','atcneE':''}]
+ // atc[0]['atcn']='';
+ //  atc[0]['atcne']='';
+ //   atc[0]['atcs']=''
+ //    atc[0]['atcw']='';
+ //   atc[0]['atce']=''
+ //   atc[0]['atcnE']='';
+ //  atc[0]['atcneE']='';
+ //   atc[0]['atcsE']=''
+
+ //       atc[0]['atcwE']='';
+ //   atc[0]['atceE']=''
+}
+else
+{
+  
+  if(typeof(atc[0]['atcn'])=="undefined"){
+  atc[0]['atcn']='';
+}
+
+if(typeof(atc[0]['atcne'])=="undefined"){
+  atc[0]['atcne']='';
+}
+
+  if(typeof(atc[0]['atcw'])=="undefined"){
+  atc[0]['atcw']='';
+}
+
+if(typeof(atc[0]['atce'])=="undefined"){
+  atc[0]['atce']='';
+}
+
+if(typeof(atc[0]['atcs'])=="undefined"){
+  atc[0]['atcs']='';
+}
+
+  if(typeof(atc[0]['atcnE'])=="undefined"){
+  atc[0]['atcnE']='';
+}
+
+if(typeof(atc[0]['atcneE'])=="undefined"){
+  atc[0]['atcneE']='';
+}
+
+if(typeof(atc[0]['atcsE'])=="undefined"){
+  atc[0]['atcsE']='';
+}
+
+  if(typeof(atc[0]['atcwE'])=="undefined"){
+  atc[0]['atcwE']='';
+}
+
+if(typeof(atc[0]['atceE'])=="undefined"){
+  atc[0]['atceE']='';
+}
+
+
+
+}
+
+document.getElementById("NRimport").value=atc[0]['atcn'];
+document.getElementById("NRexport").value=atc[0]['atcnE'];
+
+document.getElementById("WRimport").value=atc[0]['atcw'];
+document.getElementById("WRexport").value=atc[0]['atcwE'];
+
+document.getElementById("SRimport").value=atc[0]['atcs'];
+document.getElementById("SRexport").value=atc[0]['atcsE'];
+
+document.getElementById("NERimport").value=atc[0]['atcne'];
+document.getElementById("NERexport").value=atc[0]['atcneE'];
+
+document.getElementById("ERimport").value=atc[0]['atce'];
+document.getElementById("ERexport").value=atc[0]['atceE'];
+
+console.log(atc);
+
+
+var htm2='';
+htm2+='<label ><h5>Fill the Impoert/Export ATC details to be incorporated in SCED</h5></label><div class="form-group row"><div class="col-lg-6"><label for="atcnr">ATC NR(Import)</label><input type="text" class="form-control" id="atcnr"  placeholder="ATC NR" value="'+atc[0]['atcn']+'"></div><div class="col-lg-6"><label for="atcnr">ATC NR(Export)</label><input type="text" class="form-control" id="atcnrE"  placeholder="ATC NR" value="'+atc[0]['atcnE']+'"></div></div><div class="form-group row"><div class="col-lg-6"><label for="atcsr">ATC SR(Import)</label><input type="text" class="form-control" id="atcsr"  placeholder="ATC SR" value="'+atc[0]['atcs']+'"></div><div class="col-lg-6"><label for="atcsr">ATC SR(Export)</label><input type="text" class="form-control" id="atcsrE"  placeholder="ATC SR" value="'+atc[0]['atcsE']+'"></div></div><div class="form-group row"> <div class="col-lg-6"><label for="atcner">ATC NER(Import)</label><input type="text" class="form-control" id="atcner"  placeholder="ATC NER" value="'+atc[0]['atcne']+'"></div><div class="col-lg-6"><label for="atcner">ATC NER(Export)</label><input type="text" class="form-control" id="atcnerE"  placeholder="ATC NER" value="'+atc[0]['atcneE']+'"></div></div><button type="submit" class="btn btn-primary" onclick="saveATC()">Save ATC</button>';
+
+
+// document.getElementById('atcdetail').innerHTML=htm2;
+});
+
+
+
+
+$.post('/gamsdata/getTodayData',{selectedDate:selectedDate,selectedGen:selectedGen},function(res){
+   selectedGenerator=idtoname[selectedGen];
+   if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+chartdata=JSON.parse(res);
+
+console.log(chartdata);
+var finaldata=[];
+var tt=[];
+var cumm=0;
+//console.log(predictedBlock);
+var coreEngine1=chartdata[curr_block][1];
+var coreEngine2=chartdata[curr_block][2];
+tt.push("generator");
+tt.push("present schedule");
+tt.push("optimal schedule");
+finaldata.push(tt);
+
+for(var i=1;i<chartdata.length;i++){
+var temp=[];
+temp.push(i.toString());
+temp.push(chartdata[i][1]);
+temp.push(chartdata[i][2]);
+cumm+=chartdata[i][2]-chartdata[i][1];
+finaldata.push(temp);
+}
+cumm=Math.round(cumm*100)/100;
+
+//console.log(finaldata);
+final1=finaldata;
+ google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+var htm4='';
+    if(coreEngine2==0 || coreEngine1==0){
+htm4+='<div class="alert alert-danger" role="alert"><h4>Stopped</h4></div>';
+    }else{
+ htm4+='<div class="alert alert-success" role="alert"><h4> Working</h4></div>';
+    }
+      document.getElementById('engineStatus').innerHTML=htm4;
+      });
+
+
+$.post('/gamsdata/getTodaySaving',{selectedDate:[selectedDate],selectedGen:selectedGen,flag:0},function(res){
+   
+chartdata=JSON.parse(res);
+console.log('chartdata of getTodaySaving',chartdata);
+
+selectedGenerator=idtoname[selectedGen];
+
+if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+
+//console.log(chartdata);
+var finaldata=[];
+var tt=[];
+var cumm=0;
+tt.push("generator");
+tt.push("savings");
+finaldata.push(tt);
+var hh=[];
+hh.push("1");
+hh.push(chartdata[1][1]);
+cumm+=chartdata[1][1];
+finaldata.push(hh);
+for(var i=2;i<chartdata.length;i++){
+var temp=[];
+temp.push(i.toString());
+temp.push(chartdata[i][1]);
+cumm+=chartdata[i][1];
+finaldata.push(temp);
+}
+cumm=Math.round((cumm/4)*100)/100;
+//console.log(finaldata);
+final2=finaldata;
+ google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart1);
+        document.getElementById('chart_cumm1').innerHTML="<center><h7><b>Cumulative Net  :"+cumm.toString()+" (in Lakhs) </b></h7></center>";
+     // showOpt1();
+      });
+
+
+$.post('/marginalcost/getTodayCost',{selectedDate:[selectedDate]},function(res){
+   
+chartdataSMP=JSON.parse(res);
+
+var avgar=0;
+var avgnr=0;
+var avgsr=0;
+var avgai=0;
+
+for(var i=1;i<chartdataSMP.length;i++){
+     avgar+=chartdataSMP[i][1];
+     avgnr+=chartdataSMP[i][2];
+     avgsr+=chartdataSMP[i][3];
+     avgai+=chartdataSMP[i][4];
+
+}
+avgar=Math.round((avgar/curr_block)*100)/100;
+avgnr=Math.round((avgnr/curr_block)*100)/100;
+avgsr=Math.round((avgsr/curr_block)*100)/100;
+avgai=Math.round((avgai/curr_block)*100)/100;
+
+//console.log(chartdata);
+ google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart2);
+     document.getElementById('chart_cumm2').innerHTML="<table class='table table-borderd' id='SMP'><thead><tr><th>Average SMP NER</th><th>Average SMP NR</th><th>Average SMP SR</th><th>Average SMP ALL India</th></tr></thead><tbody><tr><td>"+avgar.toString()+"</td><td>"+avgnr.toString()+"</td><td>"+avgsr.toString()+"</td><td>"+avgai.toString()+"</td></tr></tbody></table>";
+      });
+
+
+
+
+ function emerstop(){
+    console.log("in estop")
+    var NR = document.getElementById("NRcheck");
+    var WR = document.getElementById("WRcheck");
+    var SR = document.getElementById("SRcheck");
+    var ER = document.getElementById("ERcheck");
+    var NER = document.getElementById("NERcheck");
+    var nr = 0,wr = 0,sr = 0,er = 0,ner = 0;
+
+    if (NR.checked == true){ nr = 1}
+    if (WR.checked == true){ wr = 1}
+    if (SR.checked == true){ sr = 1}
+    if (ER.checked == true){ er = 1}
+    if (NER.checked == true){ ner = 1}
+
+    console.log("NR",nr);
+    console.log("WR",wr);
+    console.log("SR",sr);
+    console.log("ER",er);
+    console.log("NER",ner);
+
+    $.post("/exclude/putEmergency",{data:[er,ner,nr,sr,wr]},function(res){
+
+
+     if(res){
+      alert("submitted successfully")
+     }
+
+    })
+
+    console.log("Emergency Stop button called!");
+  }
+
+
+       function drawChart(){
+
+  var data = google.visualization.arrayToDataTable(final1);
+tle='Optimal Schedule and Present Schedule for '+selectedGenerator;
+        var options = {
+          title: tle,
+          hAxis: {title: 'Block'}
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+
+
+}
+
+
+function drawChart1(){
+
+  console.log(final2);
+  var data = google.visualization.arrayToDataTable(final2);
+  var tle='Net for '+selectedGenerator;
+
+        var options = {
+          title:tle,
+          hAxis: {title: 'Block'}
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_div1'));
+        chart.draw(data, options);
+
+
+}
+
+function drawChart2(){
+
+  var data = google.visualization.arrayToDataTable(chartdataSMP);
+
+        var options = {
+          title: 'System Marginal Price',
+          hAxis: {title: 'Block'}
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_div2'));
+        chart.draw(data, options);
+
+
+}
+
+function drawChartATC(){
+
+  var data = google.visualization.arrayToDataTable(atcf);
+
+        var options = {
+          title: 'ATC and IR Schedule NR',
+          hAxis: {title: 'Block'}
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_divATC'));
+        chart.draw(data, options);
+
+
+}
+
+function drawChartATCSR(){
+
+  var data = google.visualization.arrayToDataTable(atcfsr);
+
+        var options = {
+          title: 'ATC and IR Schedule SR',
+          hAxis: {title: 'Block'}
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_divATCSR'));
+        chart.draw(data, options);
+
+
+}
+
+function drawChartATCNER(){
+
+  var data = google.visualization.arrayToDataTable(atcfar);
+
+        var options = {
+          title: 'ATC and IR Schedule NER',
+          hAxis: {title: 'Block'}
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_divATCNER'));
+        chart.draw(data, options);
+
+
+}
+
+function drawChart3(){
+
+  var data = google.visualization.arrayToDataTable(final);
+  var tle='diff between current optimal and previous optimal schedule for '+selectedGenerator;
+
+
+        var options = {
+          title:tle,
+          hAxis: {title: 'Block'}
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+
+
+}
+
+
+    function alerts(){
+
+        $.post('/gamsdata/getTodayData',{selectedDate:selectedDate,selectedGen:"NR"},function(res){
+                          var alertNR=JSON.parse(res);
+
+  $.post('/gamsdata/getTodayData',{selectedDate:selectedDate,selectedGen:"WR"},function(res){
+    var alertWR=JSON.parse(res);
+
+  $.post('/gamsdata/getTodayData',{selectedDate:selectedDate,selectedGen:"SR"},function(res){
+
+    var alertSR=JSON.parse(res);
+//console.log(alertSR)
+  $.post('/gamsdata/getTodayData',{selectedDate:selectedDate,selectedGen:"ER"},function(res){
+    var alertER=JSON.parse(res);
+
+  $.post('/gamsdata/getTodayData',{selectedDate:selectedDate,selectedGen:"AR"},function(res){
+
+var alertNER=JSON.parse(res);
+
+
+  var i=curr_block;
+  if(curr_block==1)
+     {  
+
+
+     }else{
+
+
+
+            schNR=alertNR[i][1]-alertNR[i-1][1];
+            optNR=alertNR[i][2]-alertNR[i-1][2];
+     
+            schER=alertER[i][1]-alertER[i-1][1];
+            optER=alertER[i][2]-alertER[i-1][2];
+     
+            schSR=alertSR[i][1]-alertSR[i-1][1];
+            optSR=alertSR[i][2]-alertSR[i-1][2];
+     
+            schWR=alertWR[i][1]-alertWR[i-1][1];
+            optWR=alertWR[i][2]-alertWR[i-1][2];
+     
+     
+            schNER=alertNER[i][1]-alertNER[i-1][1];
+            optNER=alertNER[i][2]-alertNER[i-1][2];
+
+            outputFeasibility=schNR+schER+schNER+schSR+schWR-(optNR+optNER+optWR+optSR+optER);
+
+            }
+            var htm='';
+            var htm1="<table class='table table-bordered'><thead><tr><th>Output</th></tr></thead><tbody><tr>";
+           if(outputFeasibility > 700 || outputFeasibility < -700){
+            htm1+="<td class='btn btn-danger'></td></tr>";
+           }else{
+
+            htm1+="<td class='alert alert-success'></td></tr>";
+           }
+            htm1+="</table>";
+
+            htm+="<table class='table table-bordered'><thead><tr><th>NR</th><th>ER</th><th>WR</th><th>SR</th><th>NER</th></tr></thead><tbody><tr>";
+                 
+         if(schNR==0){
+
+          htm+="<td class='alert alert-danger'></td>";
+
+         }else{
+
+             htm+="<td class='alert alert-success'></td>";
+         }
+
+
+         if(schER==0){
+
+          htm+="<td class='alert alert-danger'></td>";
+
+         }else{
+
+             htm+="<td class='alert alert-success'></td>";
+         }
+
+                 
+         if(schWR==0){
+
+          htm+="<td class='alert alert-danger'></td>";
+
+         }else{
+
+             htm+="<td class='alert alert-success'></td>";
+         }
+
+        
+         if(schSR==0){
+
+          htm+="<td class='alert alert-danger'></td>";
+
+         }else{
+
+             htm+="<td class='alert alert-success'></td>";
+         }
+
+
+                
+         if(schNER==0){
+
+          htm+="<td class='alert alert-danger'></td>";
+
+         }else{
+
+             htm+="<td class='alert alert-success'></td>";
+         }
+
+         htm+="</tr></tbody></table>";
+
+document.getElementById('alertTable').innerHTML=htm;
+
+document.getElementById('outputTable').innerHTML=htm1;
+
+  });
+
+  });
+
+  });
+
+  });
+
+        });
+
+    }
+    $.post('/gamsopt/getALL',function(res){
+        var data=JSON.parse(res);
+        //console.log(data['gamsdata'][0]);
+        for(var i=0;i<data['gen'].length;i++){
+          var temp=[];
+          
+             temp.push(data['gen'][i]['genname']);
+             temp.push(data['gen'][i]['state']);
+             temp.push(data['gen'][i]['type']);
+             temp.push(data['gen'][i]['total']);
+             temp.push(data['gamsdata'][0][data['gen'][i]['id'].toString()]['DC']);
+             temp.push(data['gamsdata'][0][data['gen'][i]['id'].toString()]['DC on bar']);
+             temp.push(data['gamsdata'][0][data['gen'][i]['id'].toString()]['Schedule']);
+             temp.push(data['gamsdata'][0][data['gen'][i]['id'].toString()]['Optimal Schedule']);
+
+//console.log(temp);
+        }
+         alerts();
+
+    });
+
+    function startSCED(){
+
+       if(confirm("Are you sure you want to start SCED?"))
+       {
+                   console.log("accepted");
+      
+                    $.post('/excludedgen/startSCED',function(res){
+
+                      console.log($("#NRcheck").value)
+                 
+                              $("#NRcheck").prop("checked", false);
+  $("#WRcheck").prop("checked", false);
+  $("#ERcheck").prop("checked", false);
+  $("#SRcheck").prop("checked", false);
+  $("#NERcheck").prop("checked", false);
+$("#ALLcheck").prop("checked", false);
+
+  emerstop()
+
+                  });
+
+       }else{
+
+        console.log("cancel");
+       }
+
+
+    }
+
+
+    function stopSCED(){
+   if(confirm("Are you sure you want to stop SCED?"))
+       {
+                  $.post('/excludedgen/stopSCED',function(res){
+
+                    
+                  });
+       }else{
+
+        console.log("cancel");
+       }
+
+
+    }
+
+
+    function saveATC(){
+
+if(confirm("are you sure you want to save ATC values for SCED optimization in next block"))
+       {
+        var atcnr=document.getElementById('atcnr').value;
+        var atcsr=document.getElementById('atcsr').value;
+        var atcner=document.getElementById('atcner').value;
+
+          var atcnrE=document.getElementById('atcnrE').value;
+        var atcsrE=document.getElementById('atcsrE').value;
+        var atcnerE=document.getElementById('atcnerE').value;
+
+        $.post('/atcdetails/putATC',{atcnr:atcnr,atcsr:atcsr,atcner:atcner,atcnrE:atcnrE,atcsrE:atcsrE,atcnerE:atcnerE},function(res){
+
+
+        });
+                   
+       }else{
+
+        console.log("cancel");
+       }
+
+    }
+  </script>f

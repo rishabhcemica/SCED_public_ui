@@ -1,0 +1,192 @@
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script type="text/javascript">
+
+      var selectedDate='';
+      var tdate='';
+      var chartdata;
+      var selectedGenerator;
+      var final;
+
+
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+    $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+$('#calender2').val(today);
+
+$.post('/gen/getAllGens',function(res){
+var gens=JSON.parse(res);
+console.log(gens);
+  htm='';
+htm+='<option value="0">ALL</option>';
+htm+='<option value="5">NER</option>';
+htm+='<option value="4">SR</option>';
+htm+='<option value="2">WR</option>';
+htm+='<option value="1">ER</option>';
+htm+='<option value="3">NR</option>'; 
+for(var i=0;i<gens.length;i++){
+htm+='<option value="'+gens[i]['id']+'">'+gens[i]['name']+'</option>';}
+document.getElementById('dropdown').innerHTML=htm;
+});
+
+});
+
+function showOpt(){
+
+  selectedDate=document.getElementById("calender1").value;
+var selectedGen=$("#dropdown").val();
+console.log('selected name:',$("#dropdown"));
+console.log('selectedGen is: ',selectedGen);
+
+tdate=document.getElementById("calender2").value;
+
+
+
+  var from=$( "#calender1" ).datepicker('getDate');
+  var dates=[];
+  var i=1;
+  dates.push(selectedDate);
+  if(selectedDate!=tdate)
+{  
+
+  do{   
+
+  var x=from;
+   x.setDate(x.getDate()+i);
+   var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=tdate);
+
+}
+
+
+
+
+  $.post('/gamsdata/getpminfromhelper',{dates:dates,genid:selectedGen},function(res){
+    var coldres=[];
+    var xaxisD=[];
+    res=JSON.parse(res)
+  for(var i=0;i<res.length;i++)
+  {
+    var dataFromResponse=res[i]['data'][selectedGen]['OFFBAR'].split(',');
+    for(var j=0;j<dataFromResponse.length;j++)
+    {
+      coldres.push(parseInt(dataFromResponse[j]));
+      xaxisD.push(res[i]['date'] +' : ' + parseInt(j+1));
+    }
+
+  }
+
+  //console.log(xaxisD);
+  //console.log(coldres);
+
+  
+  Highcharts.chart('chart_div', {
+
+    chart: {
+        type: 'area',
+        zoomType: 'xy'
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        },
+    title: {
+        text:' Cold Reserve '
+    },
+    xAxis: {
+        categories: xaxisD,
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    
+    credits: {
+        enabled: false
+    },
+    series: [ {
+        name: 'Cold Reserve',
+        data: coldres,
+        color:' #ADD8E6'
+    }]
+});
+
+
+
+
+
+
+
+
+
+
+
+
+});
+
+
+
+
+
+
+}
+
+
+
+    </script>
+
+
+      <div class="row">
+
+<div class="col-lg-2">
+    <label for="calender1">FROM DATE:</label>
+    <input type="text" class="form-control"   id="calender1">
+</div>
+
+<div class="col-lg-2">
+    <label for="calender2">TO DATE:</label>
+    <input type="text" class="form-control"   id="calender2">
+</div>
+
+<div class="col-lg-4">
+          <label>Generators</label>
+          <select id="dropdown" class="form-control"></select>
+</div>
+
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-outline-primary form-control" onclick="showOpt()" >submit</button>
+</div>
+</div>
+<div id="chart_div" style="width: 100%; height: 500px;"></div>
+
+

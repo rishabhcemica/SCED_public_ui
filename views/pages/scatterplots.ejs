@@ -1,0 +1,492 @@
+
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<style type="text/css">
+  thead#sysreport {
+    background: bisque;
+}
+
+table.table.table-bordered {
+    background: ghostwhite;
+}
+</style>
+<script type="text/javascript">
+  
+
+   $(function(){
+
+  $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+    $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+document.getElementById("calender2").value = today;
+
+
+});
+
+   function show(){
+
+
+
+
+var from=$( "#calender1" ).datepicker('getDate');
+var fromDate=document.getElementById("calender1").value;
+var toDate=document.getElementById("calender2").value;
+  var dates=[];
+  var i=1;
+  dates.push(fromDate);
+  if(fromDate==toDate)
+  {
+
+  }
+else
+{  do{   
+
+  var x=from;
+   x.setDate(x.getDate()+i);
+   var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=toDate);}
+
+$.post('/gamspwc/getScatterPlot',{dates:dates},function(res){
+
+var scatter=JSON.parse(res);
+console.log(scatter);
+var finalTable=[];
+var finalTable1=[];
+var finalTableSaving=[];
+var finalUp=[];
+var finalDown=[];
+var smpscatter=[];
+
+for(var i=0;i<scatter.length;i++){
+var pre=Math.round((scatter[i][3]*10000/scatter[i][1])*100)/100;
+var post=Math.round((scatter[i][2]*10000/scatter[i][0])*100)/100;
+  finalTable.push([parseInt(scatter[i][0]),Math.round((scatter[i][3]*10000/scatter[i][1])*100)/100]);
+  smpscatter.push([parseInt(scatter[i][7]),Math.round((scatter[i][3]*10000/scatter[i][1])*100)/100]);
+  finalTable1.push([parseInt(scatter[i][0]),Math.round((scatter[i][2]*10000/scatter[i][0])*100)/100]);
+  finalTableSaving.push([parseInt(scatter[i][0]),pre-post]);
+
+  finalUp.push([pre-post,parseInt(scatter[i][5])]);
+  finalDown.push([pre-post,parseInt(scatter[i][6])]);
+
+}
+
+console.log("smpscatter",finalTable)
+//console.log(finalTableSaving);
+
+Highcharts.chart('chart_div5', {
+    chart: {
+        type: 'scatter',
+        zoomType: 'xy'
+    },
+    title: {
+        text: 'MW vs Average Price(paisa/unit)'
+    },
+    
+    xAxis: {
+        min:30000,
+          max:45000,
+        title: {
+            enabled: true,
+            text: 'MW Generation'
+        },
+        startOnTick: true,
+        endOnTick: true,
+        showLastLabel: true
+    },
+    yAxis: {
+          min:180,
+          max:230,
+        title: {
+
+            text: 'Average Price(Paisa/unit)'
+        }
+    },
+    legend: {
+        layout: 'vertical',
+        align: 'left',
+        verticalAlign: 'top',
+        floating: true,
+        backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF',
+        borderWidth: 1
+    },
+    plotOptions: {
+        scatter: {
+            marker: {
+                radius: 5,
+                states: {
+                    hover: {
+                        enabled: true,
+                        lineColor: 'rgb(100,100,100)'
+                    }
+                }
+            },
+            states: {
+                hover: {
+                    marker: {
+                        enabled: false
+                    }
+                }
+            }
+        }
+    },
+    series: [{
+        name: 'MW vs Paisa/unit POST SCED',
+        color: 'rgba(223, 83, 83, .5)',
+        data: finalTable
+
+    },{
+        name: 'MW vs Paisa/unit PRE SCED',
+        color: 'rgba(119, 152, 191, .5)',
+        data: finalTable1
+
+    }
+    ]
+});
+
+
+Highcharts.chart('chart_div9', {
+    chart: {
+        type: 'scatter',
+        zoomType: 'xy'
+    },
+    title: {
+        text: 'SMP vs Average Price(paisa/unit)'
+    },
+    
+    xAxis: {
+   
+        title: {
+            enabled: true,
+            text: 'SMP'
+        },
+        startOnTick: true,
+        endOnTick: true,
+        showLastLabel: true
+    },
+    yAxis: {
+          min:180,
+          max:230,
+        title: {
+
+            text: 'Average Price(Paisa/unit)'
+        }
+    },
+    legend: {
+        layout: 'vertical',
+        align: 'left',
+        verticalAlign: 'top',
+        floating: true,
+        backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF',
+        borderWidth: 1
+    },
+    plotOptions: {
+        scatter: {
+            marker: {
+                radius: 5,
+                states: {
+                    hover: {
+                        enabled: true,
+                        lineColor: 'rgb(100,100,100)'
+                    }
+                }
+            },
+            states: {
+                hover: {
+                    marker: {
+                        enabled: false
+                    }
+                }
+            }
+        }
+    },
+    series: [{
+        name: 'SMP vs Paisa/unit POST SCED',
+        color: 'rgba(223, 83, 83, .5)',
+        data: smpscatter
+
+    }
+    ]
+});
+
+console.log('finalup is: ');
+console.log(finalUp);
+
+Highcharts.chart('chart_div7', {
+    chart: {
+        type: 'scatter',
+        zoomType: 'xy'
+    },
+    title: {
+        text: 'Reserves vs savings(paisa/unit)'
+    },
+    
+    xAxis: {
+     
+        title: {
+            text: 'Savings(Paisa/Unit)'
+        }
+    },
+    yAxis: {
+        
+        title: {
+
+            text: 'Reserves (MW)'
+        }
+    },
+    series: [{
+        name: 'UP Reserves vs savings',
+        color: 'rgba(223, 83, 83, .5)',
+        data: finalUp
+
+    },{
+        name: 'DOWN Reserves vs savings',
+        color: 'rgba(119, 152, 191, .5)',
+        data: finalDown
+
+    }
+    ]
+});
+
+
+
+
+
+
+
+
+Highcharts.chart('chart_div6', {
+    chart: {
+        type: 'scatter',
+        zoomType: 'xy'
+    },
+    title: {
+        text: 'MW vs savings(paisa/unit)'
+    },
+    
+    xAxis: {
+      min:35000,
+      max:45000,
+
+        title: {
+            enabled: true,
+            text: 'MW Generation'
+        }
+    },
+    yAxis: {
+         
+        title: {
+
+            text: 'savings(Paisa/unit)'
+        }
+    },
+   
+    
+    series: [{
+        name: 'MW vs savings',
+        color: 'rgba(223, 83, 83, .5)',
+        data: finalTableSaving
+
+    }
+    ]
+});
+
+
+
+
+
+
+
+
+
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+$.post('/gamsdata/getTodaySaving',{selectedDate:dates,selectedGen:'ALL',flag:0},function(res){
+   
+chartdata=JSON.parse(res);
+
+
+//console.log(chartdata);
+
+var savingsData=[];
+savingsData.push(chartdata[1][1]);
+for(var i=2;i<chartdata.length;i++){
+savingsData.push(Number((-1*chartdata[i][1]).toFixed(2)));
+}
+
+
+
+$.post('/gamspwc/getChanges',{date:dates},function(res){
+   
+chartdata=JSON.parse(res);
+
+
+//console.log(chartdata);
+
+var pmin=[];
+var pmax=[];
+
+for(var i=0;i<chartdata.length;i++){
+    pmax.push(parseInt(chartdata[i][3]));
+     pmin.push(parseInt(chartdata[i][4]));
+}
+
+
+
+
+
+
+
+
+
+var finaldata=[];
+
+for(var i=0;i<pmax.length;i++)
+{
+    var temp=[];
+    temp.push(savingsData[i]);
+    temp.push(pmax[i]);
+
+    finaldata.push(temp);
+}
+
+
+
+console.log(finaldata);
+
+Highcharts.chart('chart_div8', {
+    chart: {
+        type: 'scatter',
+        zoomType: 'xy'
+    },
+    title: {
+        text: 'Perturbation(MW) vs savings(paisa/unit)'
+    },
+    
+    xAxis: {
+     
+        title: {
+            text: 'Savings(Paisa/Unit)'
+        }
+    },
+    yAxis: {
+        
+        title: {
+
+            text: 'Perturbation(MW)'
+        }
+    },
+    series: [{
+        name: 'Average Perturbation vs savings',
+        color: 'rgba(223, 83, 83, .5)',
+        data: finaldata,
+
+    }
+    ]
+});
+
+
+
+
+
+
+
+});
+
+
+
+
+
+
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   }
+
+
+</script>
+
+<div class="row">
+
+    <div class="col-lg-3">
+    <label for="calender1">FROM DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+    </div>
+
+    <div class="col-lg-3">
+    <label for="calender2">TO DATE</label>
+    <input type="text" class="form-control"   id="calender2">
+    </div>
+ 
+    <div class="col-lg-3">
+    <label for="show">EDIT</label>
+    <button class="btn btn-outline-primary form-control" id="show" onclick="show()">SHOW</button>
+    </div>
+
+</div>
+
+<div class="row">
+<div id="chart_div5" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+<div id="chart_div6" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+</div>
+
+<div class="row">
+<div id="chart_div7" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+<div id="chart_div8" style="width: 100%; height: 500px;" class="col-lg-6 "></div>
+</div>
+<div class="row">
+    <div id="chart_div9" style="width:100%;height: 500px;" class="col-lg-6"></div>
+    </div>

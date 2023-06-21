@@ -1,0 +1,191 @@
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+      <script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script type="text/javascript">
+
+      var selectedDate='';
+      var selectedGenerator;
+      var selectedGenerator1;
+      var chartdata;
+      var final;
+       var chartdata1;
+      var final1;
+     
+      var month_names =["Jan","Feb","Mar",
+                      "Apr","May","Jun",
+                      "Jul","Aug","Sep",
+                      "Oct","Nov","Dec"];
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+        $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+   // $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+document.getElementById("calender2").value = today;
+
+htm='';
+
+htm+='<option value="NER">NER</option>';
+htm+='<option value="SR">SR</option>';
+htm+='<option value="WR">WR</option>';
+htm+='<option value="ER">ER</option>';
+htm+='<option value="NR">NR</option>';
+
+document.getElementById('dropdown').innerHTML=htm;
+
+
+});
+
+function showOpt(){
+  let fromdate=document.getElementById("calender1").value;
+let region = $("#dropdown").val();
+
+ let todate=document.getElementById("calender2").value;
+
+
+
+$.post('/atc/getATCIR',{fromdate,todate,region},function(res){
+   
+chartdata=JSON.parse(res);
+
+console.log(chartdata)
+
+let USER_IMPORT = chartdata["USER_IMPORT"]
+let USER_EXPORT = chartdata["USER_EXPORT"].map(d=>-1*d)
+let IMPORT = chartdata["IMPORT"]
+let EXPORT = chartdata["EXPORT"].map(d=> -1*d)
+let IRSCH = []
+let IRPRE = chartdata["IMPORT_SCH"]
+
+for(let i=0;i<chartdata["IMPORT"].length;i++){
+  if(region=="ER")
+  IRSCH.push(chartdata["IMPORT_SCH"][i]-chartdata["SCED"][i]-chartdata["TALCHER"][i])
+else if(region=="SR")
+  IRSCH.push(chartdata["IMPORT_SCH"][i]-chartdata["SCED"][i]+chartdata["TALCHER"][i])
+else
+  IRSCH.push(chartdata["IMPORT_SCH"][i]-chartdata["SCED"][i])
+
+
+
+}
+
+
+
+Highcharts.chart('chart_div', {
+
+    chart: {
+        type: 'area',
+        zoomType: 'xy',
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        },
+    title: {
+        text:'INTER REGIONAL SCHEDULE AND ATC FROM DATE '+fromdate+' TO DATE '+todate 
+    },
+    xAxis: {
+        categories: chartdata["blocks"],
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        }
+    },
+    
+    credits: {
+        enabled: false
+    },
+    series: [{
+        name: 'IMPORT ATC',
+        data: IMPORT,
+        color:'rgba(0,196,255,0.3)'
+    },
+    {
+        name: 'EXPORT ATC',
+        data: EXPORT,
+        color:'rgba(192,149,242,0.3)'
+    },
+    {
+        name: 'USER IMPORT ATC',
+        data: USER_IMPORT,
+        color:' #ff0000'
+    },
+    {
+        name: 'USER EXPORT ATC',
+        data: USER_EXPORT,
+        color:' #ff8000'
+    },
+    {
+        name: 'IR POST SCED',
+        data: IRSCH,
+        color:'rgba(205,248,23,0.3)'
+    },
+    {
+        name: 'IR PRE SCED',
+        data: IRPRE,
+        color:'rgba(255,179,179,0.3)'
+    }
+    ]
+});
+
+      });
+
+
+
+}
+
+
+
+
+
+
+
+
+
+    </script>
+
+
+      <div class="row">
+
+               <div class="col-lg-2">
+    <label for="calender1">FROM DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+
+               <div class="col-lg-2">
+    <label for="calender2">TO DATE</label>
+     <input type="text" class="form-control"   id="calender2">
+</div>
+
+        <div class="col-lg-4">
+          <label>REGIONS</label>
+          <select id="dropdown" class="form-control">
+</select>
+      </div>
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-primary form-control" onclick="showOpt()" >submit</button>
+</div>
+</div>
+<div id="chart_div" style="width: 100%; height: 500px;" class="row"></div>
+
+
+

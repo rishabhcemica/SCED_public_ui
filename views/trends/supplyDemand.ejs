@@ -1,0 +1,201 @@
+         <script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+         <script type="text/javascript">
+
+      var selectedDate='';
+      var chartdata;
+      var selectedGenerator;
+      var final;
+       var month_names =["Jan","Feb","Mar",
+                      "Apr","May","Jun",
+                      "Jul","Aug","Sep",
+                      "Oct","Nov","Dec"];
+                      var final1;
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+   // $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+
+  htm='';
+
+for(var i=1;i<=96;i++){
+htm+='<option value="'+i.toString()+'">'+i.toString()+'</option>';}
+document.getElementById('dropdown').innerHTML=htm;
+
+
+});
+
+function showOpt(){
+    selectedDate=document.getElementById("calender1").value;
+var  selectedBlock=$("#dropdown").val();
+
+$.post('/marginalcost/getTodayCost',{selectedDate:[selectedDate]},function(res){
+  var smp=JSON.parse(res);
+
+console.log(selectedDate);
+
+let months=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+
+
+ var dte=selectedDate.split('-');
+ dte[1]=months[parseInt(dte[1]) - 1];
+ var d8=dte.join('-');
+ console.log(d8);
+
+ //var dataDCOff=JSON.parse(await sails.helpers.getPmin.with({sdate:d8}));
+// console.log(data);
+
+
+$.post('/gamspwc/getSupplyDemand',{date:[selectedDate],block:selectedBlock},function(res){
+  var sdem=(JSON.parse(res)[1]);
+//console.log(res)
+sdem.sort(function(a, b){return (a.vc - b.vc)});
+
+
+var currentSMP=smp[selectedBlock][4];
+
+var netdemand=[];
+var cummdc=[];
+var cummdcoffon=[];
+var vc=[];
+var cdc=0;
+var cdconoff=0;
+var netdem=0;
+for(var i=0;i<sdem.length;i++){
+  vc.push(sdem[i]['vc']);
+  cdc+=parseInt(sdem[i]['dc']);
+  cummdc.push(parseInt(cdc));
+    cdconoff+=parseInt(sdem[i]['dcoffon']);
+  cummdcoffon.push(cdconoff);
+netdem+=parseInt(sdem[i]['opt']);
+
+}
+for(var i=0;i<sdem.length;i++){
+  netdemand.push(netdem);
+}
+
+
+Highcharts.chart('chart_div1', {
+
+    chart: {
+        type: 'line',
+        zoomType: 'xy'
+    }, legend: {
+              itemStyle: {
+                 fontSize: '20px',
+                 color: '#000000'
+              }
+
+        }, yAxis: {
+       
+        title: {
+
+            text: 'MW'
+        }
+    },
+    title: {
+        text:' Supply and Demand for Date '+selectedDate+' and Block '+selectedBlock
+    },
+    xAxis: {
+        categories:vc,
+            labels: {
+            fontSize:'25px',
+            style: {
+                color:'#000000'
+            }
+        },
+        plotLines: [{
+        color: '#FF0000', // Red
+        width: 2,
+        value: currentSMP
+    }]
+    },
+    
+    credits: {
+        enabled: false
+    },
+    series: [  {
+        name: 'Cummulative DC Onbar',
+        data:cummdc,
+        color:' #FA8072'
+    },{
+        name: 'Net Demand',
+        data: netdemand,
+        color:'#ADD8E6 '
+    }
+    ,{
+      name: 'Cummulative DC On + Off bar',
+      data: cummdcoffon,
+      color: '#AFFFF0'
+    }
+    ]
+});
+
+
+
+
+
+
+});
+
+
+});
+
+}
+
+// function drawChart(){
+
+//   var data = google.visualization.arrayToDataTable(final1);
+// tle='Ramping Reserves Pre and Post SCED';
+//         var options = {
+//           title: tle,
+//                     titleTextStyle:{ color:'black',
+//   fontName:'Arial',
+//   fontSize:25,
+//   bold: true,
+//   italic: true }
+//         };
+
+//         var chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
+//         chart.draw(data, options);
+
+
+// }
+
+
+</script>   
+
+
+
+     <div class="row">
+               <div class="col-lg-2">
+    <label for="calender1">DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+        <div class="col-lg-2">
+          <label>Block</label>
+          <select id="dropdown" class="form-control">
+</select>
+      </div>
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-outline-primary form-control" onclick="showOpt()" >submit</button>
+</div>
+</div>
+
+<div class="col-lg-12" id="chart_div1" style="width: 100%; height: 500px;"></div>

@@ -1,0 +1,924 @@
+       <script src="https://kendo.cdn.telerik.com/2016.3.914/js/kendo.all.min.js"></script>
+ <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.22/pdfmake.min.js"></script>
+   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.39/vfs_fonts.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.7/pako.min.js"></script>
+    <script type="text/javascript">
+       kendo.pdf.defineFont({
+      "DejaVu Sans": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans.ttf",
+      "DejaVu Sans|Bold": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Bold.ttf",
+      "DejaVu Sans|Bold|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+      "DejaVu Sans|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+      "WebComponentsIcons": "https://kendo.cdn.telerik.com/2017.1.223/styles/fonts/glyphs/WebComponentsIcons.ttf"
+    });
+    </script>
+<style type="text/css">
+.long {
+    min-width: 150px;
+}
+thead#headgen {
+    background: antiquewhite;
+}
+div#costtable {
+    margin-left: 500px;
+}
+
+
+
+
+table th {
+    position: -webkit-sticky; 
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background:bisque;
+}
+/*table {
+    background-color: #aaa;
+}
+tbody {
+    background-color: #ddd;
+    height: 800px;
+    overflow: auto;
+}
+
+
+thead, tbody {
+    display: block;
+}*/
+</style>
+    <script type="text/javascript">
+
+      var variableCost;
+      var month_names =["Jan","Feb","Mar",
+                      "Apr","May","Jun",
+                      "Jul","Aug","Sep",
+                      "Oct","Nov","Dec"];
+                      var regmap={"2":"NER","1":"ER","3":"NR","4":"SR","5":"WR"};
+                       var idmap={"AR":"2","ER":"1","NR":"3","SR":"4","WR":"5"};
+                       var generators=[];
+      $(function(){
+
+
+document.getElementById('btnExport').style.display = "none";
+document.getElementById('btnExport1').style.display = "none";
+
+  $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+    $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+document.getElementById("calender2").value = today;
+$.get('/account/getRates',function(res){
+ variableCost=JSON.parse(res);
+ //console.log(genrates);
+});
+$.post('/gen/getAllGens',function(res){
+var gens=JSON.parse(res);
+console.log(gens);
+  htm='';
+htm+='<option value="ALL">ALL</option>';
+htm+='<option value="NR">NR</option>';
+htm+='<option value="SR">SR</option>';
+htm+='<option value="WR">WR</option>';
+htm+='<option value="ER">ER</option>';
+htm+='<option value="AR">NER</option>';
+// for(var i=0;i<gens.length;i++){
+// htm+='<option value="'+gens[i]['id']+'">'+gens[i]['name']+'</option>';}
+for(var i=0;i<gens.length;i++){
+htm+='<option value="'+gens[i]['id']+'">'+gens[i]['name']+'</option>';
+generators.push(gens[i]['id']);
+}
+document.getElementById('dropdown').innerHTML=htm;
+});
+});
+
+
+      
+  
+
+  function show(){
+
+document.getElementById('btnExport').style.display = "block";
+document.getElementById('btnExport1').style.display = "block";
+
+
+var fromDate=document.getElementById("calender1").value;
+var toDate=document.getElementById("calender2").value
+
+if(fromDate==toDate){
+  var dvar=[];
+  dvar.push(fromDate);
+
+
+$.post('/account/getRates',{date:dvar},function(res){
+ var genrates=JSON.parse(res);
+ //console.log(genrates);
+
+var selectedGen=$("#dropdown").val();
+
+if(selectedGen!='ALL')
+{
+
+  $.post('/gamsopt/accountCostDate',{dates:fromDate,selectedGen:selectedGen},function(res){
+
+
+var gendata=JSON.parse(res);
+console.log(gendata);
+//var selectedGen=$("#dropdown").val();
+var htm1='';
+var header='';
+
+
+  if(typeof(idtoname[selectedGen])!="undefined")
+ { header=idtoname[selectedGen];}
+else{
+  header=selectedGen;
+}
+htm1+='<table class="table table-responsive"><thead><tr><th><center> <h3>Account of  :'+header+' For SCED</h3></center></th></tr></thead><tbody><tr><td>';
+
+htm1+='<table class="table table-bordered table-responsive"><thead id="headgen"><tr><th>Block</th><th>SCED UP(MW)</th><th>SCED DOWN(MW)</th><th>SCED UP COST( &#8377; )</th><th>SCED DOWN COST( &#8377; )</th><th>Net (&#8377;)</th></tr></thead><tbody>';
+var totalUp=0;
+var totalDown=0;
+var totalUprate=0;
+var totalDownrate=0;
+
+  
+ for(var j=0;j<gendata[0]['data'].length;j++){
+         htm1+='<tr><td><h4>'+(j+1).toString()+'</h4></td>';
+        var up=gendata[0]['data'][j]['scedup'];
+        var dn=gendata[0]['data'][j]['sceddn'];
+         var up1=up;
+         var dn1=dn;
+//console.log(up);
+//console.log(dn);
+        if(up===null){
+          up=0;
+        }
+        if(dn===null){
+          dn=0;
+        }
+        up=Math.round((up/4)*100)/100;
+        dn=Math.round((dn/4)*100)/100;
+        totalUp+=up;
+        totalDown+=dn;
+var vcdate=gendata[0]['date'].split("-")[0]+"-"+month_names[parseInt(gendata[0]['date'].split("-")[1])-1]+"-"+gendata[0]['date'].split("-")[2];
+
+var rateup=0;
+var ratesdn=0;
+
+if(typeof(genrates[vcdate][parseInt(selectedGen)])!="undefined"){
+  rateup=up*parseFloat(genrates[vcdate][parseInt(selectedGen)])*10;
+  ratesdn=dn*parseFloat(genrates[vcdate][parseInt(selectedGen)])*10;
+}
+
+
+ rateup=Math.round(rateup*100)/100;
+
+ ratesdn=Math.round(ratesdn*100)/100;
+
+
+
+totalUprate+=rateup;
+totalDownrate+=ratesdn;
+
+ //console.log(rateup);
+
+htm1+='<td><h4>'+up1.toString()+'<h4></td><td><h4>'+dn1.toString()+'</h4></td><td><h4>'+rateup.toString()+'</h4></td><td><h4>'+ratesdn.toString()+'</h4></td><td><h4>'+(ratesdn-rateup).toString()+'</h4></td></tr>';
+ 
+
+
+ }
+
+totalUp=Math.round(totalUp*100)/100;
+totalDown=Math.round(totalDown*100)/100;
+totalUprate=Math.round(totalUprate*100)/100;
+totalDownrate=Math.round(totalDownrate*100)/100;
+
+htm1+='<tr><td><h4>Total</h4></td><td><h4>'+totalUp.toString()+'</h4></td><td><h4>'+totalDown.toString()+'</h4></td><td><h4>'+totalUprate.toString()+'</h4></td><td><h4>'+totalDownrate.toString()+'</h4></td><td><h4>'+(totalDownrate-totalUprate).toString()+'</h4></td></tr>';
+htm1+='</tbody></table></td></tr></tbody></table>';
+document.getElementById('costtable').innerHTML=htm1;
+
+});
+
+
+
+
+}
+
+
+
+
+
+else{
+// var dates1=[];
+// dates1.push(fromDate);
+
+$.post('/gamsopt/accountCostDateAll',{dates:fromDate},function(res){
+
+          var gendata=JSON.parse(res);
+          console.log(gendata);
+
+          var header='';
+
+  if(typeof(idtoname[selectedGen])!="undefined")
+ { header=idtoname[selectedGen];}
+else{
+  header=selectedGen;
+}
+
+var htm1='';
+          htm1+='<table class="table table-responsive" id="accountDownload"><thead><tr><th><center> <h3>Account of  :'+header+' For SCED</h3></center></th></tr></thead><tbody><tr>';
+
+
+for( var gen=0;gen<generators.length;gen++)
+{
+var totalUp=0;
+var totalDown=0;
+var totalUprate=0;
+var totalDownrate=0;
+ htm1+='<td><table class="table table-bordered " id="accountDownload'+gen.toString()+'"><thead id="headgen"><tr><th>Block</th><th>SCED UP(MWhr)</th><th>SCED DOWN(MWhr)</th><th>SCED UP COST( &#8377; )</th><th>SCED DOWN COST( &#8377; )</th><th>Net(&#8377;)</th><th></th></tr></thead><tbody>';
+  htm1+='<tr><td><h3>'+idtoname[generators[gen]]+'</h3></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+  for(var j=0;j<gendata[0]['data'][generators[gen]].length;j++){
+         htm1+='<tr><td><h4>'+(j+1).toString()+'</h4></td>';
+        var up=gendata[0]['data'][generators[gen]][j]['scedup'];
+        var dn=gendata[0]['data'][generators[gen]][j]['sceddn'];
+         var up1=up;
+         var dn1=dn;
+//console.log(up);
+//console.log(dn);
+        if(up===null){
+          up=0;
+        }
+        if(dn===null){
+          dn=0;
+        }
+        up=up/4;
+        dn=dn/4;
+        totalUp+=up;
+        totalDown+=dn;
+var vcdate=gendata[0]['date'].split("-")[0]+"-"+month_names[parseInt(gendata[0]['date'].split("-")[1])-1]+"-"+gendata[0]['date'].split("-")[2];
+console.log(genrates);
+
+var rateup=0;
+var ratesdn=0;
+if(typeof(genrates[vcdate][parseInt(generators[gen])])!="undefined"){
+  rateup=up*parseFloat(genrates[vcdate][parseInt(generators[gen])])*10;
+  ratesdn=dn*parseFloat(genrates[vcdate][parseInt(generators[gen])])*10;
+}
+
+ 
+ rateup=rateup;
+ 
+ ratesdn=ratesdn;
+
+
+
+totalUprate+=rateup;
+totalDownrate+=ratesdn;
+
+ console.log(rateup);
+
+htm1+='<td><h4>'+up1.toString()+'<h4></td><td><h4>'+dn1.toString()+'</h4></td><td><h4>'+rateup.toString()+'</h4></td><td><h4>'+ratesdn.toString()+'</h4></td><td><h4>'+(ratesdn-rateup).toString()+'</h4></td><td></td></tr>';
+ 
+
+
+ }
+
+ htm1+='<tr><td><h4>Total</h4></td><td><h4>'+totalUp.toString()+'</h4></td><td><h4>'+totalDown.toString()+'</h4></td><td><h4>'+totalUprate.toString()+'</h4></td><td><h4>'+totalDownrate.toString()+'</h4></td><td><h4>'+(totalDownrate-totalUprate).toString()+'</h4></td><td></td></tr>';
+htm1+="</tbody></table></td>";
+}
+
+htm1+="</td></tr></tbody></table>";
+
+
+
+document.getElementById('costtable').innerHTML=htm1;
+
+});
+
+
+document.getElementById('downloadButton').innerHTML='<button onclick="exportTableToCSV(\'SCED\')">Export to CSV</button>';
+
+}
+
+
+
+});
+
+}else{
+
+  var from=$( "#calender1" ).datepicker('getDate');
+  var dates=[];
+  var i=1;
+  dates.push(fromDate);
+  do{   
+
+  var x=from;
+   x.setDate(x.getDate()+i);
+   var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=toDate);
+
+console.log(dates);
+$.post('/account/getRates',{date:dates},function(res){
+ var genrates=JSON.parse(res);
+ console.log(genrates);
+
+  $.post('/gamsopt/accountCost',{dates:dates},function(res){
+
+
+var gendata=JSON.parse(res);
+console.log(gendata);
+var selectedGen=$("#dropdown").val();
+var htm1='';
+var header=''
+
+  if(typeof(idtoname[selectedGen])!="undefined")
+ { header=idtoname[selectedGen];}
+else{
+  header=selectedGen;
+}
+
+
+htm1+='<table class="table table-responsive"><thead><tr><th><center> <h3>Account of  :'+header+' For SCED</h3></center></th></tr></thead><tbody><tr><td>';
+
+
+htmb='';
+htm1+='<table class="table table-bordered "><thead id="headgen"><tr><th class="long">Date</th><th>SCED UP(MWhr)</th><th>SCED DOWN(MWhr)</th><th>SCED UP COST( &#8377; )</th><th>SCED DOWN COST( &#8377; )</th><th>Net(&#8377;)</th></tr></thead><tbody>';
+
+htmb+='<table class="table table-bordered "><thead id="headgen"><tr><th class="long">Date</th><th>SCED UP(MWhr)</th><th>SCED DOWN(MWhr)</th><th>SCED UP COST( &#8377; )</th><th>SCED DOWN COST( &#8377; )</th><th>Net(&#8377;)</th><th>Net Benifit(paisa/unit)</th></tr></thead><tbody>';
+
+var totalUp=0;
+var totalDown=0;
+var totalUprate=0;
+var totalDownrate=0;
+if(selectedGen!='ALL' && selectedGen!="NR" && selectedGen!="ER" && selectedGen!="WR" && selectedGen!="SR" && selectedGen!="AR")
+{
+  for(var i=0;i<gendata.length;i++){
+  htm1+='<tr id="genslist"><td class="long"><h4>'+gendata[i]['date']+'</h4></td>';
+ for(var j=0;j<gendata[i]['data'].length;j++){
+  if(gendata[i]['data'][j]['genid']==selectedGen){
+        var up=gendata[i]['data'][j]['scedup'];
+        var dn=gendata[i]['data'][j]['sceddn'];
+
+//console.log(up);
+//console.log(dn);
+        if(up===null){
+          up=0;
+        }
+        if(dn===null){
+          dn=0;
+        }
+        up=Math.round((up/4)*100)/100;
+        dn=Math.round((dn/4)*100)/100;
+        totalUp+=up;
+        totalDown+=dn;
+ var vcdate=gendata[i]['date'].split("-")[0]+"-"+month_names[parseInt(gendata[i]['date'].split("-")[1])-1]+"-"+gendata[i]['date'].split("-")[2];
+ //var rateup=up*parseFloat(genrates[vcdate][parseInt(selectedGen)])*10;
+ 
+var rateup=0;
+var ratesdn=0;
+if(typeof(genrates[vcdate][parseInt(selectedGen)])!="undefined"){
+  rateup=up*parseFloat(genrates[vcdate][parseInt(selectedGen)])*10;
+  ratesdn=dn*parseFloat(genrates[vcdate][parseInt(selectedGen)])*10;
+}
+
+
+ rateup=Math.round(rateup*100)/100;
+
+ ratesdn=Math.round(ratesdn*100)/100;
+
+totalUprate+=rateup;
+totalDownrate+=ratesdn;
+
+ console.log(rateup);
+
+htm1+='<td><h4>'+up.toString()+'<h4></td><td><h4>'+dn.toString()+'</h4></td><td><h4>'+rateup.toString()+'</h4></td><td><h4>'+ratesdn.toString()+'</h4></td><td><h4>'+(ratesdn-rateup).toString()+'</h4></td></tr>';
+  }
+
+
+ }
+
+}
+
+totalUp=Math.round(totalUp*100)/100;
+totalDown=Math.round(totalDown*100)/100;
+totalUprate=Math.round(totalUprate*100)/100;
+totalDownrate=Math.round(totalDownrate*100)/100;
+
+htm1+='<tr><td><h4>Total</h4></td><td><h4>'+totalUp.toString()+'</h4></td><td><h4>'+totalDown.toString()+'</h4></td><td><h4>'+totalUprate.toString()+'</h4></td><td><h4>'+totalDownrate.toString()+'</h4></td><td><h4>'+(totalDownrate-totalUprate).toString()+'</h4></td></tr>';
+htm1+='</tbody></table>';
+htm1+='</td></tr></table>';
+document.getElementById('costtable').innerHTML=htm1;
+
+}else if(selectedGen=="NR" || selectedGen=="ER" || selectedGen=="WR" || selectedGen=="SR" || selectedGen=="AR"){
+
+
+totalDown=0;
+totalUp=0;
+totalDownrate=0;
+totalUprate=0;
+
+
+for(var i=0;i<gendata.length;i++){
+   var rateDUP=0;
+   var rateDDOWN=0;
+   var DUP=0;
+   var DDOWN=0;
+ for(var j=0;j<gendata[i]['data'].length;j++){
+  if(gendata[i]['data'][j]['genid'][0]==idmap[selectedGen]){
+        var up=gendata[i]['data'][j]['scedup'];
+        var dn=gendata[i]['data'][j]['sceddn'];
+
+//console.log(up);
+//console.log(dn);
+        if(up===null){
+          up=0;
+        }
+        if(dn===null){
+          dn=0;
+        }
+        up=(up/4);
+        dn=(dn/4);
+        totalUp+=up;
+        totalDown+=dn;
+        DUP+=up;
+        DDOWN+=dn;
+
+ var vcdate=gendata[i]['date'].split("-")[0]+"-"+month_names[parseInt(gendata[i]['date'].split("-")[1])-1]+"-"+gendata[i]['date'].split("-")[2];
+ console.log(vcdate);
+// var rateup=up*parseFloat(genrates[vcdate][parseInt(gendata[i]['data'][j]['genid'])])*10;
+
+var rateup=0;
+var ratesdn=0;
+if(typeof(genrates[vcdate][parseInt(gendata[i]['data'][j]['genid'])])!="undefined"){
+  rateup=up*parseFloat(genrates[vcdate][parseInt(gendata[i]['data'][j]['genid'])])*10;
+   ratesdn=dn*parseFloat(genrates[vcdate][parseInt(gendata[i]['data'][j]['genid'])])*10;
+}
+
+ rateup=rateup;
+
+ ratesdn=ratesdn;
+
+totalUprate+=rateup;
+totalDownrate+=ratesdn;
+
+rateDUP+=rateup;
+rateDDOWN+=ratesdn;
+
+ console.log(rateup);
+
+//htm1+='<tr><td>'+up.toString()+'</td><td>'+dn.toString()+'</td><td>'+rateup.toString()+'</td><td>'+ratesdn.toString()+'</td></tr>';
+  
+
+}
+ }
+ 
+
+ htm1+='<tr><td><h5>'+gendata[i]['date']+'</h5></td><td><h5>'+(DUP).toString()+'</h5></td><td><h5>'+(DDOWN).toString()+'</h5></td><td><h5>'+(rateDUP).toString()+'</h5></td><td><h5>'+(rateDDOWN).toString()+'</h5></td><td><h5>'+(rateDDOWN-rateDUP).toString()+'</h5></td></tr>';
+
+}
+
+
+// totalUp=Math.round(totalUp*100)/100;
+// totalDown=Math.round(totalDown*100)/100;
+// totalUprate=Math.round(totalUprate*100)/100;
+// totalDownrate=Math.round(totalDownrate*100)/100;
+
+htm1+='<tr><td><h4>Total</h4></td><td><h4>'+totalUp.toString()+'</h4></td><td><h4>'+totalDown.toString()+'</h4></td><td><h4>'+totalUprate.toString()+'</h4></td><td><h4>'+totalDownrate.toString()+'</h4></td><td><h4>'+(totalDownrate-totalUprate).toString()+'</h4></td></tr>';
+htm1+='</tbody></table>';
+
+
+////////////////////////////////////////////////////////////////////////NR//////////////////////////////////////////
+
+
+
+
+
+ for(var j=0;j<gendata[0]['data'].length;j++){
+     var rateDUP=0;
+   var rateDDOWN=0;
+   var DUP=0;
+   var DDOWN=0;
+     totalUprate=0;
+totalDownrate=0;
+totalUp=0;
+totalDown=0;
+if(gendata[0]['data'][j]['genid'][0]==idmap[selectedGen]){
+ htm1+='</td></tr><tr><td><div><center><h4>'+idtoname[gendata[0]['data'][j]['genid']]+'</h4></center></div><table class="table table-bordered "><thead id="headgen"><tr><th>Date</th><th>SCED UP(MWhr)</th><th>SCED DOWN(MWhr)</th><th>SCED UP COST( &#8377; )</th><th>SCED DOWN COST( &#8377; )</th><th>Net(&#8377;)</th></tr></thead><tbody>';}
+for(var i=0;i<gendata.length;i++){
+
+ if(gendata[i]['data'][j]['genid'][0]==idmap[selectedGen]){
+ 
+        var up=gendata[i]['data'][j]['scedup'];
+        var dn=gendata[i]['data'][j]['sceddn'];
+
+console.log(gendata[i]['data'][j]);
+//console.log(dn);
+        if(up===null){
+          up=0;
+        }
+        if(dn===null){
+          dn=0;
+        }
+        up=(up/4);
+        dn=(dn/4);
+        totalUp+=up;
+        totalDown+=dn;
+        DUP+=up;
+        DDOWN+=dn;
+ var vcdate=gendata[i]['date'].split("-")[0]+"-"+month_names[parseInt(gendata[i]['date'].split("-")[1])-1]+"-"+gendata[i]['date'].split("-")[2];
+
+var rateup=0;
+var ratesdn=0;
+
+if(typeof(genrates[vcdate][parseInt(gendata[i]['data'][j]['genid'])])!="undefined"){
+  rateup=up*parseFloat(genrates[vcdate][parseInt(gendata[i]['data'][j]['genid'])])*10;
+    ratesdn=dn*parseFloat(genrates[vcdate][parseInt(gendata[i]['data'][j]['genid'])])*10;
+}
+
+
+
+ rateup=rateup;
+
+ ratesdn=ratesdn;
+
+totalUprate+=rateup;
+totalDownrate+=ratesdn;
+
+rateDUP+=rateup;
+rateDDOWN+=ratesdn;
+
+ //console.log(rateup);
+
+htm1+='<tr><td><h5>'+gendata[i]['date']+'</h5></td><td><h5>'+up.toString()+'</h5></td><td><h5>'+(dn).toString()+'</h5></td><td><h5>'+(rateup).toString()+'</h5></td><td><h5>'+(ratesdn).toString()+'</h5></td><td><h5>'+(rateup-ratesdn).toString()+'</h5></td></tr>';
+  
+}
+
+
+ }
+
+//  totalUp=Math.round(totalUp*100)/100;
+// totalDown=Math.round(totalDown*100)/100;
+// totalUprate=Math.round(totalUprate*100)/100;
+// totalDownrate=Math.round(totalDownrate*100)/100;
+if(gendata[0]['data'][j]['genid'][0]==idmap[selectedGen]){
+htm1+='<tr><td><h4>Total</h4></td><td><h4>'+totalUp.toString()+'</h4></td><td><h4>'+totalDown.toString()+'</h4></td><td><h4>'+totalUprate.toString()+'</h4></td><td><h4>'+totalDownrate.toString()+'</h4></td><td><h4>'+(totalDownrate-totalUprate).toString()+'</h4></td></tr>';
+htm1+='</tbody></table>';}
+ 
+
+ }
+
+
+
+
+
+
+
+
+
+htm1+='</td></tr></tbody></table>';
+document.getElementById('costtable').innerHTML=htm1;
+
+
+
+
+
+
+
+}
+
+else{
+
+
+htm1='';
+for(var i=0;i<gendata.length;i++){
+   var rateDUP=0;
+   var rateDDOWN=0;
+   var DUP=0;
+   var DDOWN=0;
+ for(var j=0;j<gendata[i]['data'].length;j++){
+ // if(gendata[i]['data'][j]['genid']==selectedGen){
+        var up=gendata[i]['data'][j]['scedup'];
+        var dn=gendata[i]['data'][j]['sceddn'];
+
+//console.log(up);
+//console.log(dn);
+        if(up===null){
+          up=0;
+        }
+        if(dn===null){
+          dn=0;
+        }
+        up=Math.round((up/4)*100)/100;
+        dn=Math.round((dn/4)*100)/100;
+        totalUp+=up;
+        totalDown+=dn;
+        DUP+=up;
+        DDOWN+=dn;
+ var vcdate=gendata[i]['date'].split("-")[0]+"-"+month_names[parseInt(gendata[i]['date'].split("-")[1])-1]+"-"+gendata[i]['date'].split("-")[2];
+ 
+var rateup=0;
+var ratesdn=0;
+
+if(typeof(genrates[vcdate][parseInt(gendata[i]['data'][j]['genid'])])!="undefined"){
+   rateup=up*parseFloat(genrates[vcdate][parseInt(gendata[i]['data'][j]['genid'])])*10;
+  ratesdn=dn*parseFloat(genrates[vcdate][parseInt(gendata[i]['data'][j]['genid'])])*10;
+}
+
+
+
+
+ rateup=Math.round(rateup*100)/100;
+
+ ratesdn=Math.round(ratesdn*100)/100;
+
+totalUprate+=rateup;
+totalDownrate+=ratesdn;
+
+rateDUP+=rateup;
+rateDDOWN+=ratesdn;
+
+ console.log(rateup);
+
+//htm1+='<tr><td>'+up.toString()+'</td><td>'+dn.toString()+'</td><td>'+rateup.toString()+'</td><td>'+ratesdn.toString()+'</td></tr>';
+  
+
+
+ }
+ 
+var netbenifit=parseInt(Math.round((rateDDOWN-rateDUP)/(DUP+DDOWN)*100)/1000);
+ htmb+='<tr><td class="long"><h4>'+gendata[i]['date']+'</h4></td><td><h4>'+(Math.round(DUP*100)/100).toString()+'</h4></td><td><h4>'+(Math.round(DDOWN*100)/100).toString()+'</h4></td><td><h4>'+(Math.round(rateDUP*100)/100).toString()+'</h4></td><td><h4>'+(Math.round(rateDDOWN*100)/100).toString()+'</h4></td><td><h4>'+(Math.round((rateDDOWN-rateDUP)*100)/100).toString()+'</h4></td><td><h4><center>'+netbenifit.toString()+'</center></h4></td></tr>';
+
+}
+
+
+totalUp=Math.round(totalUp*100)/100;
+totalDown=Math.round(totalDown*100)/100;
+totalUprate=Math.round(totalUprate*100)/100;
+totalDownrate=Math.round(totalDownrate*100)/100;
+
+var totalbenifit=parseInt(Math.round((totalDownrate-totalUprate)/(totalUp+totalDown)*100)/1000);
+
+htmb+='<tr><td><h4>Total</h4></td><td><h4>'+totalUp.toString()+'</h4></td><td><h4>'+totalDown.toString()+'</h4></td><td><h4>'+totalUprate.toString()+'</h4></td><td><h4>'+totalDownrate.toString()+'</h4></td><td><h4>'+(Math.round((totalDownrate-totalUprate)*100)/100).toString()+'</h4></td><td><h4><center>'+totalbenifit.toString()+'</center></h4></td></tr>';
+htmb+='</tbody></table>';
+htm1+=htmb;
+
+////////////////////////////////////////////////////////////////////////NR//////////////////////////////////////////
+for(var reg=1;reg<6;reg++)
+
+{
+  totalUprate=0;
+totalDownrate=0;
+totalUp=0;
+totalDown=0;
+htm1+='</td><tr></tr><td><div><center><h4>'+regmap[reg.toString()]+'</h4></center></div><table class="table table-bordered "><thead id="headgen"><th>Date</th><th>SCED UP(MWhr)</th><th>SCED DOWN(MWhr)</th><th>SCED UP COST( &#8377; )</th><th>SCED DOWN COST( &#8377; )</th><th>Net(&#8377;)</th></tr></thead><tbody>';
+
+for(var i=0;i<gendata.length;i++){
+   var rateDUP=0;
+   var rateDDOWN=0;
+   var DUP=0;
+   var DDOWN=0;
+ for(var j=0;j<gendata[i]['data'].length;j++){
+ if(gendata[i]['data'][j]['genid'][0]==reg.toString()){
+        var up=gendata[i]['data'][j]['scedup'];
+        var dn=gendata[i]['data'][j]['sceddn'];
+
+console.log(gendata[i]['data'][j]);
+//console.log(dn);
+        if(up===null){
+          up=0;
+        }
+        if(dn===null){
+          dn=0;
+        }
+        up=Math.round((up/4)*100)/100;
+        dn=Math.round((dn/4)*100)/100;
+        totalUp+=up;
+        totalDown+=dn;
+        DUP+=up;
+        DDOWN+=dn;
+ var vcdate=gendata[i]['date'].split("-")[0]+"-"+month_names[parseInt(gendata[i]['date'].split("-")[1])-1]+"-"+gendata[i]['date'].split("-")[2];
+ 
+var rateup=0;
+var ratesdn=0;
+
+if(typeof(genrates[vcdate][parseInt(gendata[i]['data'][j]['genid'])])!="undefined"){
+   rateup=up*parseFloat(genrates[vcdate][parseInt(gendata[i]['data'][j]['genid'])])*10;
+   ratesdn=dn*parseFloat(genrates[vcdate][parseInt(gendata[i]['data'][j]['genid'])])*10;
+
+}
+
+
+
+
+ rateup=Math.round(rateup*100)/100;
+
+ ratesdn=Math.round(ratesdn*100)/100;
+
+totalUprate+=rateup;
+totalDownrate+=ratesdn;
+
+rateDUP+=rateup;
+rateDDOWN+=ratesdn;
+
+ //console.log(rateup);
+
+//htm1+='<tr><td>'+up.toString()+'</td><td>'+dn.toString()+'</td><td>'+rateup.toString()+'</td><td>'+ratesdn.toString()+'</td></tr>';
+  
+}
+
+ }
+ 
+
+ htm1+='<tr><td><h4>'+gendata[i]['date']+'</h4></td><td><h4>'+(Math.round(DUP*100)/100).toString()+'</h4></td><td><h4>'+(Math.round(DDOWN*100)/100).toString()+'</h4></td><td><h4>'+Math.round((rateDUP*100)/100).toString()+'</h4></td><td><h4>'+(Math.round(rateDDOWN*100)/100).toString()+'</h4></td><td><h4>'+(Math.round((rateDDOWN-rateDUP)*100)/100).toString()+'</h4></td></tr>';
+
+}
+
+
+totalUp=Math.round(totalUp*100)/100;
+totalDown=Math.round(totalDown*100)/100;
+totalUprate=Math.round(totalUprate*100)/100;
+totalDownrate=Math.round(totalDownrate*100)/100;
+
+htm1+='<tr><td><h4>Total</h4></td><td><h4>'+totalUp.toString()+'</h4></td><td><h4>'+totalDown.toString()+'</h4></td><td><h4>'+totalUprate.toString()+'</h4></td><td><h4>'+totalDownrate.toString()+'</h4></td><td><h4>'+(Math.round((totalDownrate-totalUprate)*100)/100).toString()+'</h4></td></tr>';
+htm1+='</tbody></table>';
+
+}
+
+
+htm1+='</td></tr></tbody></table>';
+document.getElementById('costtable').innerHTML=htm1;
+
+
+}
+
+
+
+
+  });
+
+});
+
+
+
+}
+
+
+
+
+
+
+  }
+
+   </script>
+
+<div class="row">
+
+               <div class="col-lg-3">
+    <label for="calender1">FROM DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+
+               <div class="col-lg-3">
+    <label for="calender2">TO DATE</label>
+     <input type="text" class="form-control"   id="calender2">
+</div>
+    <div class="col-lg-3">
+          <label>Generators</label>
+          <select id="dropdown" class="form-control">
+</select>
+      </div>
+<div class="col-lg-3">
+<label for="show">EDIT</label>
+ <button class="btn btn-primary form-control" id="show" onclick="show()">SHOW</button>
+</div>
+
+</div>
+<br>
+<br>
+<div id="downloadButton"></div>
+
+
+
+<input type="button"  class="col-lg-1 offset-lg-8 btn btn-primary" id="btnExport" value="PDF" onclick="generatePDF('.pdf-page')" />
+
+
+
+<div class="row">
+  <div id="costtable" style="height:50%;" class="pdf-page size-a5 col-lg-6 offset-lg-3"></div>
+</div>
+<input type="button"  class="col-lg-2 offset-lg-5 btn btn-primary" id="btnExport1" value="Export As PDF" onclick="generatePDF('.pdf-page')" />
+<script type="text/javascript">
+ 
+  
+      var generatePDF = function(selector) {
+  // kendo.drawing.drawDOM($("#dsm")).then(function(group) {
+  //   kendo.drawing.pdf.saveAs(group, "Converted PDF.pdf");
+  // });
+  //$('#milage').removeClass('table-responsive');
+
+    kendo.drawing.drawDOM($(selector)).then(function (group) {
+        kendo.drawing.pdf.saveAs(group, "Report.pdf");
+      });
+
+    $('#costtable').addClass('table-responsive');
+}
+
+function downloadCSV(csv, filename) {
+    var csvFile;
+    var downloadLink;
+
+    // CSV file
+    csvFile = new Blob([csv], {type: "text/csv"});
+
+    // Download link
+    downloadLink = document.createElement("a");
+
+    // File name
+    downloadLink.download = filename;
+
+    // Create a link to the file
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+
+    // Hide download link
+    downloadLink.style.display = "none";
+
+    // Add the link to DOM
+    document.body.appendChild(downloadLink);
+
+    // Click download link
+    downloadLink.click();
+}
+
+
+
+function exportTableToCSV(filename) {
+  var fromDate=document.getElementById("calender1").value;
+    var csv = [];
+    for(var block=0;block<99;block++){
+var row = [];
+
+ for(var x=0;x<47;x++)
+
+{    var rows = document.querySelectorAll("#accountDownload"+x.toString()+" tr");
+     //var row = [];
+  
+        cols = rows[block].querySelectorAll("td, th");
+        
+        for (var j = 0; j < cols.length; j++) 
+            row.push(cols[j].innerText);
+        
+               
+   
+     
+
+  }
+csv.push(row.join(","));
+      
+    }
+
+
+//     for(var x=0;x<47;x++)
+
+// {    var rows = document.querySelectorAll("#accountDownload"+x.toString()+" tr");
+//      var row = [];
+//     for (var i = 0; i < rows.length; i++) {
+//         cols = rows[i].querySelectorAll("td, th");
+        
+//         for (var j = 0; j < cols.length; j++) 
+//             row.push(cols[j].innerText);
+        
+               
+//     }
+//     csv.push(row.join(",")); 
+
+//   }
+
+    // Download CSV file
+    downloadCSV(csv.join("\n"), filename+fromDate+".csv");
+}
+
+</script>

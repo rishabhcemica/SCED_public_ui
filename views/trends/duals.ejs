@@ -1,0 +1,169 @@
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script type="text/javascript">
+
+      var selectedDate='';
+      var chartdata;
+      var selectedGenerator;
+      var final;
+   $( function() {
+    $( "#calender1" ).datepicker({dateFormat : "dd-mm-yy"});
+    $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+   // $( "#calender2" ).datepicker({dateFormat : "dd-mm-yy"});
+
+        var today = new Date();
+var dd = today.getDate();
+var mm = today.getMonth()+1; //January is 0!
+
+var yyyy = today.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("calender1").value = today;
+document.getElementById("calender2").value = today;
+
+$.post('/gen/getAllGens',function(res){
+var gens=JSON.parse(res);
+console.log(gens);
+  htm='';
+// htm+='<option value="ALL">ALL</option>';
+// htm+='<option value="AR">NER</option>';
+// htm+='<option value="SR">SR</option>';
+// htm+='<option value="WR">WR</option>';
+// htm+='<option value="ER">ER</option>';
+// htm+='<option value="NR">NR</option>';
+for(var i=0;i<gens.length;i++){
+htm+='<option value="'+gens[i]['id']+'">'+gens[i]['name']+'</option>';}
+document.getElementById('dropdown').innerHTML=htm;
+});
+
+});
+
+function showOpt(){
+  selectedDate=document.getElementById("calender1").value;
+  var todate=document.getElementById("calender2").value;
+
+var selectedGen=$("#dropdown").val();
+
+  var from=$( "#calender1" ).datepicker('getDate');
+  var dates=[];
+  var i=1;
+  dates.push(selectedDate);
+
+  if(selectedDate!=todate)
+{
+
+do{   
+
+var x=from;
+x.setDate(x.getDate()+i);
+var dd = x.getDate();
+var mm = x.getMonth()+1; //January is 0!
+
+var yyyy = x.getFullYear();
+if(dd<10){
+dd='0'+dd;
+} 
+if(mm<10){
+mm='0'+mm;
+}
+var x = dd+'-'+mm+'-'+yyyy;
+dates.push(x);
+}while(x!=todate);
+
+
+}
+
+$.post('/gamsdual/getDualTrend',{selectedDate:dates,selectedGen:selectedGen},function(res){
+   selectedGenerator=idtoname[selectedGen];
+   if(typeof(selectedGenerator)=="undefined"){
+  selectedGenerator=selectedGen;
+}
+chartdata=JSON.parse(res);
+console.log(chartdata);
+var finaldata=[];
+var tt=[];
+var cumm=0;
+tt.push("generator");
+tt.push("dual of Ramp Up");
+tt.push("dual of Ramp Down");
+tt.push("dual of Pmax");
+tt.push("dual of Pmin");
+
+finaldata.push(tt);
+
+for(var i=1;i<chartdata.length;i++){
+var temp=[];
+temp.push(chartdata[i][0]);
+temp.push(chartdata[i][1]);
+temp.push(chartdata[i][2]);
+temp.push(chartdata[i][3]);
+temp.push(chartdata[i][4]);
+
+cumm+=chartdata[i][1]+chartdata[i][2]+chartdata[i][3]+chartdata[i][4];
+finaldata.push(temp);
+}
+cumm=Math.round(cumm*100)/100;
+
+console.log(finaldata);
+final=finaldata;
+ google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+
+      // document.getElementById('chart_cumm').innerHTML="<h3>Cummulative of the above trend is :"+cumm.toString()+" MW </h3>";
+      });
+
+}
+
+function drawChart(){
+
+  var data = google.visualization.arrayToDataTable(final);
+tle='duals of binding constraints of  '+selectedGenerator;
+        var options = {
+          title: tle,
+                    titleTextStyle:{ color:'black',
+  fontName:'Arial',
+  fontSize:25,
+  bold: true,
+  italic: true },
+          hAxis: {title: 'Block'}
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+
+
+}
+
+    </script>
+
+
+      <div class="row">
+               <div class="col-lg-2">
+    <label for="calender1">FROM DATE</label>
+     <input type="text" class="form-control"   id="calender1">
+</div>
+
+
+               <div class="col-lg-2">
+    <label for="calender2">TO DATE</label>
+     <input type="text" class="form-control"   id="calender2">
+</div>
+
+        <div class="col-lg-4">
+          <label>Generators</label>
+          <select id="dropdown" class="form-control">
+</select>
+      </div>
+<div class="col-lg-2">
+  <label>submit</label>
+  <button class="btn btn-outline-primary form-control" onclick="showOpt()" >submit</button>
+</div>
+</div>
+<div class="row">
+<div id="chart_div" style=" height: 500px;" class="col-lg-12"></div>
+</div>
